@@ -9,13 +9,35 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly pool: pg.Pool;
 
   constructor() {
+    const connectionString = process.env.DATABASE_URL;
     const pool = new pg.Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
+      connectionString,
+      ssl: PrismaService.resolveSsl(connectionString),
     });
     const adapter = new PrismaPg(pool);
     super({ adapter });
     this.pool = pool;
+  }
+
+  private static resolveSsl(connectionString?: string) {
+    if (!connectionString) {
+      return undefined;
+    }
+
+    const url = new URL(connectionString);
+    const sslMode = url.searchParams.get('sslmode');
+    const dbSsl = process.env.DB_SSL?.toLowerCase();
+    const isPrivateHost = !url.hostname.includes('.') || url.hostname.endsWith('.internal');
+
+    if (dbSsl === 'false' || isPrivateHost) {
+      return undefined;
+    }
+
+    if (dbSsl === 'true' || sslMode === 'require') {
+      return { rejectUnauthorized: false };
+    }
+
+    return undefined;
   }
 
   async onModuleInit() {
