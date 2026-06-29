@@ -14,6 +14,10 @@ describe('DashboardService', () => {
     order: {
       count: jest.fn(),
       findMany: jest.fn(),
+      aggregate: jest.fn(),
+    },
+    expense: {
+      aggregate: jest.fn(),
     },
   };
 
@@ -62,6 +66,8 @@ describe('DashboardService', () => {
 
     mockPrismaService.customer.findMany.mockResolvedValue(mockRecentCustomers);
     mockPrismaService.order.findMany.mockResolvedValue(mockRecentOrders);
+    mockPrismaService.order.aggregate.mockResolvedValue({ _sum: { paidAmount: 5000 } });
+    mockPrismaService.expense.aggregate.mockResolvedValue({ _sum: { amount: 1200 } });
 
     const result = await service.getDashboardData(workspaceId);
 
@@ -71,6 +77,9 @@ describe('DashboardService', () => {
         activeOrders: 5,
         completedOrders: 3,
         todaysOrders: 2,
+        totalRevenue: 5000,
+        totalExpenses: 1200,
+        netProfit: 3800,
       },
       recentCustomers: mockRecentCustomers,
       recentOrders: mockRecentOrders,
