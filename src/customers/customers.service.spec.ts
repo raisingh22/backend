@@ -1,23 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
+import { CustomersService } from './customers.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-describe('AuthService', () => {
-  let service: AuthService;
+describe('CustomersService', () => {
+  let service: CustomersService;
 
-  const mockPrismaService = {
-    user: {
-      findUnique: jest.fn(),
-    },
-    workspace: {
-      create: jest.fn(),
-    },
-  };
+  const mockPrismaService = {};
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        AuthService,
+        CustomersService,
         {
           provide: PrismaService,
           useValue: mockPrismaService,
@@ -25,7 +18,7 @@ describe('AuthService', () => {
       ],
     }).compile();
 
-    service = module.get<AuthService>(AuthService);
+    service = module.get<CustomersService>(CustomersService);
   });
 
   it('should be defined', () => {

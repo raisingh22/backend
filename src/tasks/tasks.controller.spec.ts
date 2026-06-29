@@ -1,24 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { TasksController } from './tasks.controller';
+import { TasksService } from './tasks.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-describe('AuthController', () => {
-  let controller: AuthController;
+describe('TasksController', () => {
+  let controller: TasksController;
 
-  const mockAuthService = {
-    register: jest.fn(),
-  };
-
+  const mockTasksService = {};
   const mockPrismaService = {};
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [AuthController],
+      controllers: [TasksController],
       providers: [
         {
-          provide: AuthService,
-          useValue: mockAuthService,
+          provide: TasksService,
+          useValue: mockTasksService,
         },
         {
           provide: PrismaService,
@@ -27,7 +24,7 @@ describe('AuthController', () => {
       ],
     }).compile();
 
-    controller = module.get<AuthController>(AuthController);
+    controller = module.get<TasksController>(TasksController);
   });
 
   it('should be defined', () => {

@@ -12,7 +12,18 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users User[]
+  users     User[]
+  tasks     Task[]
+  customers Customer[]
+  prescriptions Prescription[]
+  orders Order[]
+  appointments Appointment[]
+  settings     WorkspaceSettings?
+  branches     Branch[]
+  products     Product[]
+  expenses     Expense[]
+  suppliers    Supplier[]
+  purchases    PurchaseOrder[]
 }
 
 model User {
@@ -23,7 +34,274 @@ model User {
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  tasks       Task[]
+
+  role        Role     @default(STAFF)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([workspaceId])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("TODO") // TODO, IN_PROGRESS, DONE
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model Customer {
+  id          String    @id @default(cuid())
+  fullName    String
+  phone       String
+  email       String?
+  dateOfBirth DateTime?
+  gender      String?
+  address     String?
+  notes       String?
+  tags        String[]  @default([])
+
+  primaryMemberId String?
+  primaryMember   Customer? @relation("FamilyLink", fields: [primaryMemberId], references: [id], onDelete: Cascade)
+  familyMembers   Customer[] @relation("FamilyLink")
+  relationType    String?
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  prescriptions Prescription[]
+  orders Order[]
+  appointments Appointment[]
+  
+  loyaltyPoints  Int       @default(0)
+  membershipTier String    @default("Bronze")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([workspaceId, phone])
+  @@index([workspaceId, fullName])
+}
+
+model Prescription {
+  id                String   @id @default(cuid())
+  rightSphere       Float?
+  rightCylinder     Float?
+  rightAxis         Int?
+  rightAdd          Float?
+  leftSphere        Float?
+  leftCylinder      Float?
+  leftAxis          Int?
+  leftAdd           Float?
+  pupillaryDistance Float?
+  doctorName        String?
+  prescriptionDate  DateTime @default(now())
+  notes             String?
+
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  orders      Order[]
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([customerId])
+  @@index([workspaceId, customerId])
+}
+
+model Order {
+  id                   String        @id @default(cuid())
+  orderNumber          String        @unique
+  frameName            String?
+  frameBrand           String?
+  frameModel           String?
+  lensType             String?
+  lensCoating          String?
+  quantity             Int           @default(1)
+  subtotal             Float         @default(0)
+  discount             Float         @default(0)
+  tax                  Float         @default(0)
+  total                Float         @default(0)
+  paidAmount           Float         @default(0)
+  balanceAmount        Float         @default(0)
+  status               OrderStatus   @default(PENDING)
+  paymentStatus        PaymentStatus @default(UNPAID)
+  expectedDeliveryDate DateTime?
+  notes                String?
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  prescriptionId String?
+  prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([customerId])
+  @@index([prescriptionId])
+  @@index([workspaceId, customerId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, paymentStatus])
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+}
+
+model Appointment {
+  id              String            @id @default(cuid())
+  scheduledAt     DateTime
+  durationMinutes Int               @default(30)
+  type            String            @default("Examination") // Examination | Frame Selection | Collection | Follow-up | Walk-in
+  status          AppointmentStatus @default(SCHEDULED)
+  notes           String?
+  reminderSentAt  DateTime?
+
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id])
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([customerId])
+  @@index([workspaceId, scheduledAt])
+  @@index([workspaceId, status])
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  WALK_IN
+}
+
+model WorkspaceSettings {
+  id                String    @id @default(cuid())
+  taxRate           Float     @default(0.0)
+  taxIdNumber       String?
+  clinicEmail       String?
+  clinicPhone       String?
+  clinicWebsite     String?
+  autoBackupEnabled Boolean   @default(false)
+  
+  workspaceId       String    @unique
+  workspace         Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model Branch {
+  id            String    @id @default(cuid())
+  name          String
+  address       String
+  phone         String?
+  businessHours String?   // JSON string of { day: string, open: string, close: string }[]
+
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  STAFF
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String   // e.g. "DELETE_ORDER", "UPDATE_PRESCRIPTION"
+  details     String?  // JSON context
+  createdAt   DateTime @default(now())
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  name        String
+  sku         String    @unique
+  barcode     String?   @unique
+  price       Float
+  quantity    Int       @default(0)
+  
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([workspaceId])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  category    String   // RENT, UTILITIES, SALARY, STOCK, OTHER
+  amount      Float
+  date        DateTime @default(now())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model Supplier {
+  id            String          @id @default(cuid())
+  name          String
+  contactPerson String?
+  phone         String?
+  email         String?
+  address       String?
+  workspaceId   String
+  workspace     Workspace       @relation(fields: [workspaceId], references: [id])
+  purchases     PurchaseOrder[]
+}
+
+model PurchaseOrder {
+  id          String    @id @default(cuid())
+  supplierId  String
+  supplier    Supplier  @relation(fields: [supplierId], references: [id])
+  totalAmount Float
+  status      String    // PENDING, COMPLETED, CANCELLED
+  items       String?   // JSON list of purchased items (frames/lenses)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  createdAt   DateTime  @default(now())
 }

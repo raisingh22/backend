@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: optiflow-backend
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: npm ci && npx prisma generate && npm run build
+    preDeployCommand: npx prisma db push
+    startCommand: npm run start:prod
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: optiflow-postgres
+          property: connectionString
+
+databases:
+  - name: optiflow-postgres
+    databaseName: optiflow
+    user: optiflow
+    plan: basic-256mb
+    region: singapore
+    diskSizeGB: 1
+    postgresMajorVersion: "16"
