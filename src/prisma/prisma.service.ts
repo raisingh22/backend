@@ -29,12 +29,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     const dbSsl = process.env.DB_SSL?.toLowerCase();
     const isPrivateHost = !url.hostname.includes('.') || url.hostname.endsWith('.internal');
 
-    if (dbSsl === 'false' || isPrivateHost) {
-      return undefined;
-    }
-
     if (dbSsl === 'true' || sslMode === 'require') {
       return { rejectUnauthorized: false };
+    }
+
+    if (dbSsl === 'false' || isPrivateHost) {
+      return undefined;
     }
 
     return undefined;
