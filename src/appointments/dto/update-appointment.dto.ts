@@ -21,5 +21,9 @@ export class UpdateAppointmentDto {
 
   @IsOptional()
   @IsString()
+  doctorName?: string;
+
+  @IsOptional()
+  @IsString()
   notes?: string;
 }

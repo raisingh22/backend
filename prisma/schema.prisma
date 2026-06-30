@@ -27,6 +27,7 @@ model Workspace {
   ledgers      Ledger[]
   staffSchedules StaffSchedule[]
   reminders    CalendarReminder[]
+  visits       Visit[]
 }
 
 model User {
@@ -88,6 +89,7 @@ model Customer {
   orders Order[]
   appointments Appointment[]
   ledger      Ledger?
+  visits      Visit[]
   
   loyaltyPoints  Int       @default(0)
   membershipTier String    @default("Bronze")
@@ -119,6 +121,9 @@ model Prescription {
   customer    Customer  @relation(fields: [customerId], references: [id])
   orders      Order[]
 
+  visitId     String?
+  visit       Visit?    @relation(fields: [visitId], references: [id], onDelete: SetNull)
+
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
@@ -127,6 +132,7 @@ model Prescription {
 
   @@index([workspaceId])
   @@index([customerId])
+  @@index([visitId])
   @@index([workspaceId, customerId])
 }
 
@@ -158,6 +164,9 @@ model Order {
   prescriptionId String?
   prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
 
+  visitId        String?
+  visit          Visit?        @relation(fields: [visitId], references: [id], onDelete: SetNull)
+
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
@@ -167,6 +176,7 @@ model Order {
   @@index([workspaceId])
   @@index([customerId])
   @@index([prescriptionId])
+  @@index([visitId])
   @@index([workspaceId, customerId])
   @@index([workspaceId, status])
   @@index([workspaceId, paymentStatus])
@@ -192,6 +202,7 @@ model Appointment {
   durationMinutes Int               @default(30)
   type            String            @default("Examination") // Examination | Frame Selection | Collection | Follow-up | Walk-in
   status          AppointmentStatus @default(SCHEDULED)
+  doctorName      String?
   notes           String?
   reminderSentAt  DateTime?
 
@@ -213,6 +224,8 @@ model Appointment {
 enum AppointmentStatus {
   SCHEDULED
   CONFIRMED
+  ARRIVED
+  IN_PROGRESS
   COMPLETED
   CANCELLED
   NO_SHOW
@@ -341,10 +354,15 @@ model LedgerTransaction {
   credit      Float                  @default(0)
   balance     Float                  // Running balance after this transaction
   notes       String?
+
+  visitId     String?
+  visit       Visit?                 @relation(fields: [visitId], references: [id], onDelete: SetNull)
+
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
 
   @@index([ledgerId])
+  @@index([visitId])
 }
 
 enum LedgerTransactionType {
@@ -389,5 +407,28 @@ model CalendarReminder {
   updatedAt   DateTime @updatedAt
 
   @@index([workspaceId])
+  @@index([workspaceId, date])
+}
+
+model Visit {
+  id             String             @id @default(cuid())
+  customerId     String
+  customer       Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  date           DateTime           @default(now())
+  type           String             // e.g. "Full Exam", "Fitting", "Follow-up", "Quick Buy"
+  doctorName     String?
+  notes          String?
+
+  prescriptions  Prescription[]
+  orders         Order[]
+  transactions   LedgerTransaction[]
+
+  workspaceId    String
+  workspace      Workspace          @relation(fields: [workspaceId], references: [id])
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([workspaceId])
+  @@index([customerId])
   @@index([workspaceId, date])
 }

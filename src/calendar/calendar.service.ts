@@ -76,7 +76,7 @@ export class CalendarService {
       events.push({
         id: `appointment-${appt.id}`,
         sourceId: appt.id,
-        title: `${appt.type} - ${appt.customer.fullName}`,
+        title: `${appt.type} - ${appt.customer.fullName}${appt.doctorName ? ` (Dr. ${appt.doctorName})` : ''}`,
         type: 'APPOINTMENT',
         date: appt.scheduledAt.toISOString().split('T')[0],
         time: this.formatTime(appt.scheduledAt),
@@ -87,6 +87,7 @@ export class CalendarService {
           customerId: appt.customerId,
           customerName: appt.customer.fullName,
           customerPhone: appt.customer.phone,
+          doctorName: appt.doctorName,
           notes: appt.notes,
         },
       });

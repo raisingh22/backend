@@ -18,6 +18,7 @@ import { SuppliersModule } from './suppliers/suppliers.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { LedgerModule } from './ledger/ledger.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { VisitModule } from './visit/visit.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { CalendarModule } from './calendar/calendar.module';
     PurchasesModule,
     LedgerModule,
     CalendarModule,
+    VisitModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -15,6 +15,7 @@ export class AppointmentsService {
         scheduledAt: new Date(dto.scheduledAt),
         durationMinutes: dto.durationMinutes ?? 30,
         type: dto.type ?? 'Examination',
+        doctorName: dto.doctorName,
         notes: dto.notes,
         workspaceId,
       },
@@ -121,6 +122,7 @@ export class AppointmentsService {
         durationMinutes: dto.durationMinutes,
         type: dto.type,
         status: dto.status,
+        doctorName: dto.doctorName,
         notes: dto.notes,
       },
       include: {
