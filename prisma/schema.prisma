@@ -24,6 +24,7 @@ model Workspace {
   expenses     Expense[]
   suppliers    Supplier[]
   purchases    PurchaseOrder[]
+  ledgers      Ledger[]
 }
 
 model User {
@@ -83,6 +84,7 @@ model Customer {
   prescriptions Prescription[]
   orders Order[]
   appointments Appointment[]
+  ledger      Ledger?
   
   loyaltyPoints  Int       @default(0)
   membershipTier String    @default("Bronze")
@@ -304,4 +306,50 @@ model PurchaseOrder {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
   createdAt   DateTime  @default(now())
+}
+
+model Ledger {
+  id             String              @id @default(cuid())
+  customerId     String              @unique
+  customer       Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  currentBalance Float               @default(0)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  transactions   LedgerTransaction[]
+  
+  workspaceId    String
+  workspace      Workspace           @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@index([customerId])
+}
+
+model LedgerTransaction {
+  id          String                 @id @default(cuid())
+  ledgerId    String
+  ledger      Ledger                 @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
+  type        LedgerTransactionType
+  referenceId String?                // Link to OrderId or other reference
+  amount      Float
+  debit       Float                  @default(0)
+  credit      Float                  @default(0)
+  balance     Float                  // Running balance after this transaction
+  notes       String?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  @@index([ledgerId])
+}
+
+enum LedgerTransactionType {
+  INVOICE_CREATED
+  ADVANCE_PAYMENT
+  FULL_PAYMENT
+  PARTIAL_PAYMENT
+  REFUND
+  ADJUSTMENT
+  DISCOUNT
+  RETURN
+  EXCHANGE
+  OPENING_BALANCE
 }

@@ -8,6 +8,7 @@ import { DashboardService } from './dashboard/dashboard.service';
 import { PrismaService } from './prisma/prisma.service';
 import { ExpensesService } from './expenses/expenses.service';
 import { SuppliersService } from './suppliers/suppliers.service';
+import { LedgerService } from './ledger/ledger.service';
 
 async function bootstrap() {
   console.log('🚀 Starting OptiFlow E2E Business Flow Integration Test...');
@@ -21,6 +22,7 @@ async function bootstrap() {
   const prismaService = app.get(PrismaService);
   const expensesService = app.get(ExpensesService);
   const suppliersService = app.get(SuppliersService);
+  const ledgerService = app.get(LedgerService);
 
   const uniqueId = Date.now().toString();
   const testEmail = `test-${uniqueId}@optiflow-test.com`;
@@ -94,6 +96,28 @@ async function bootstrap() {
       paidAmount: 5000,
     });
     console.log(`✅ Order Created! Order Number: ${order.orderNumber}, Total: ₹${order.total}, Balance Due: ₹${order.balanceAmount}`);
+
+    // 5.5. LEDGER AUTOMATION VERIFICATION
+    console.log('\nStep 5.5: Verifying automated customer ledger sync...');
+    const ledgerDetails = await ledgerService.findOneCustomerLedger(customer.id, workspaceId);
+    console.log(`✅ Ledger fetched. Current Balance: ₹${ledgerDetails.summary.currentOutstandingBalance}`);
+    console.log(`✅ Ledger Transactions Count: ${ledgerDetails.transactions.length}`);
+
+    if (ledgerDetails.summary.currentOutstandingBalance !== 6800) {
+      throw new Error(`Outstanding ledger balance expected 6800, got ${ledgerDetails.summary.currentOutstandingBalance}`);
+    }
+    if (ledgerDetails.transactions.length !== 2) {
+      throw new Error(`Expected 2 ledger transactions, got ${ledgerDetails.transactions.length}`);
+    }
+    const invoiceTx = ledgerDetails.transactions.find(t => t.type === 'INVOICE_CREATED');
+    const paymentTx = ledgerDetails.transactions.find(t => t.type === 'ADVANCE_PAYMENT');
+    if (!invoiceTx || !paymentTx) {
+      throw new Error('Ledger transactions missing auto-created invoice or payment');
+    }
+    if (invoiceTx.debit !== 11800 || paymentTx.credit !== 5000) {
+      throw new Error(`Ledger entry amounts incorrect: invoice debit ${invoiceTx.debit}, payment credit ${paymentTx.credit}`);
+    }
+    console.log('✅ Ledger automation successfully validated!');
 
     // 6. LOYALTY POINTS VERIFICATION
     console.log('\nStep 6: Verifying loyalty points awarded to customer...');

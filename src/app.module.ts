@@ -16,6 +16,7 @@ import { SettingsModule } from './settings/settings.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { PurchasesModule } from './purchases/purchases.module';
+import { LedgerModule } from './ledger/ledger.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { PurchasesModule } from './purchases/purchases.module';
     ExpensesModule,
     SuppliersModule,
     PurchasesModule,
+    LedgerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
