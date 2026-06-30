@@ -20,6 +20,22 @@ export class SettingsService {
     return settings;
   }
 
+  async getTaxSettings(workspaceId: string) {
+    const settings = await this.prisma.workspaceSettings.findUnique({
+      where: { workspaceId },
+      include: { workspace: true },
+    });
+
+    if (!settings) {
+      return await this.prisma.workspaceSettings.create({
+        data: { workspaceId },
+        include: { workspace: true },
+      });
+    }
+
+    return settings;
+  }
+
   async updateWorkspaceSettings(workspaceId: string, data: any) {
     return this.prisma.workspaceSettings.upsert({
       where: { workspaceId },

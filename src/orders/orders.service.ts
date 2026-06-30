@@ -23,6 +23,14 @@ export class OrdersService {
     const total = dto.total ?? subtotal - discount + tax;
     const paidAmount = dto.paidAmount ?? 0;
 
+    const balanceAmount = Math.max(total - paidAmount, 0);
+    const calculatedPaymentDueDate = (dto as any).paymentDueDate
+      ? new Date((dto as any).paymentDueDate)
+      : (balanceAmount > 0 ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) : null);
+    const calculatedWarrantyExpiresAt = (dto as any).warrantyExpiresAt
+      ? new Date((dto as any).warrantyExpiresAt)
+      : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
     const order = await this.prisma.order.create({
       data: {
         orderNumber: await this.generateOrderNumber(),
@@ -39,10 +47,12 @@ export class OrdersService {
         tax,
         total,
         paidAmount,
-        balanceAmount: Math.max(total - paidAmount, 0),
+        balanceAmount,
         status: dto.status ?? 'PENDING',
         paymentStatus: dto.paymentStatus ?? this.resolvePaymentStatus(total, paidAmount),
         expectedDeliveryDate: dto.expectedDeliveryDate ? new Date(dto.expectedDeliveryDate) : undefined,
+        paymentDueDate: calculatedPaymentDueDate,
+        warrantyExpiresAt: calculatedWarrantyExpiresAt,
         notes: dto.notes,
         workspaceId,
       },
@@ -169,6 +179,8 @@ export class OrdersService {
         status: dto.status,
         paymentStatus: dto.paymentStatus ?? this.resolvePaymentStatus(total, paidAmount),
         expectedDeliveryDate: dto.expectedDeliveryDate ? new Date(dto.expectedDeliveryDate) : undefined,
+        paymentDueDate: (dto as any).paymentDueDate ? new Date((dto as any).paymentDueDate) : undefined,
+        warrantyExpiresAt: (dto as any).warrantyExpiresAt ? new Date((dto as any).warrantyExpiresAt) : undefined,
         notes: dto.notes,
       },
       include: this.defaultInclude(),

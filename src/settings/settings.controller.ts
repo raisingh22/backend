@@ -13,6 +13,12 @@ export class SettingsController {
     return this.settingsService.getWorkspaceSettings(workspaceId);
   }
 
+  @Get('tax')
+  async getTaxSettings(@Request() req: any) {
+    const workspaceId = req.user.workspaceId;
+    return this.settingsService.getTaxSettings(workspaceId);
+  }
+
   @Patch()
   async updateSettings(@Request() req: any, @Body() body: any) {
     const workspaceId = req.user.workspaceId;

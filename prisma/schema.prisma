@@ -25,6 +25,8 @@ model Workspace {
   suppliers    Supplier[]
   purchases    PurchaseOrder[]
   ledgers      Ledger[]
+  staffSchedules StaffSchedule[]
+  reminders    CalendarReminder[]
 }
 
 model User {
@@ -38,6 +40,7 @@ model User {
   tasks       Task[]
 
   role        Role     @default(STAFF)
+  schedules   StaffSchedule[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -145,6 +148,8 @@ model Order {
   status               OrderStatus   @default(PENDING)
   paymentStatus        PaymentStatus @default(UNPAID)
   expectedDeliveryDate DateTime?
+  paymentDueDate       DateTime?
+  warrantyExpiresAt    DateTime?
   notes                String?
 
   customerId String
@@ -305,6 +310,7 @@ model PurchaseOrder {
   items       String?   // JSON list of purchased items (frames/lenses)
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  expectedDeliveryDate DateTime?
   createdAt   DateTime  @default(now())
 }
 
@@ -352,4 +358,36 @@ enum LedgerTransactionType {
   RETURN
   EXCHANGE
   OPENING_BALANCE
+}
+
+model StaffSchedule {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  date        DateTime
+  type        String   // SHIFT, LEAVE, HOLIDAY
+  notes       String?
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([userId])
+  @@index([workspaceId, date])
+}
+
+model CalendarReminder {
+  id          String   @id @default(cuid())
+  title       String
+  notes       String?
+  date        DateTime
+  time        String?  // HH:MM
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([workspaceId, date])
 }

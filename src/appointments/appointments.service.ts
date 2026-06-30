@@ -9,7 +9,7 @@ export class AppointmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(workspaceId: string, dto: CreateAppointmentDto) {
-    return this.prisma.appointment.create({
+    const appointment = await this.prisma.appointment.create({
       data: {
         customerId: dto.customerId,
         scheduledAt: new Date(dto.scheduledAt),
@@ -22,6 +22,33 @@ export class AppointmentsService {
         customer: { select: { id: true, fullName: true, phone: true } },
       },
     });
+
+    // Auto-create Contact Lens follow-up appointments if initial trial is booked
+    if (dto.type === 'Contact Lens Trial') {
+      const followUpIntervals = [
+        { days: 7, label: '7-Day Follow-up' },
+        { days: 30, label: '30-Day Follow-up' },
+        { days: 180, label: '6-Month Follow-up' },
+      ];
+
+      for (const interval of followUpIntervals) {
+        const scheduledDate = new Date(appointment.scheduledAt);
+        scheduledDate.setDate(scheduledDate.getDate() + interval.days);
+
+        await this.prisma.appointment.create({
+          data: {
+            customerId: dto.customerId,
+            scheduledAt: scheduledDate,
+            durationMinutes: 30,
+            type: 'Follow-up',
+            notes: `Auto-generated: Contact Lens ${interval.label} from initial trial on ${new Date(dto.scheduledAt).toLocaleDateString('en-IN')}`,
+            workspaceId,
+          },
+        });
+      }
+    }
+
+    return appointment;
   }
 
   async createWalkIn(workspaceId: string, customerId: string) {
@@ -85,9 +112,9 @@ export class AppointmentsService {
   }
 
   async update(id: string, workspaceId: string, dto: UpdateAppointmentDto) {
-    await this.findOne(id, workspaceId);
+    const existingAppt = await this.findOne(id, workspaceId);
 
-    return this.prisma.appointment.update({
+    const updated = await this.prisma.appointment.update({
       where: { id },
       data: {
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
@@ -100,6 +127,45 @@ export class AppointmentsService {
         customer: { select: { id: true, fullName: true, phone: true } },
       },
     });
+
+    // Auto-create Annual Checkup reminder 12 months later when an Examination is marked COMPLETED
+    if (dto.status === 'COMPLETED' && updated.type === 'Examination') {
+      const annualDate = new Date(updated.scheduledAt);
+      annualDate.setFullYear(annualDate.getFullYear() + 1);
+
+      // Check if an eye checkup is already scheduled around that date to avoid duplicate
+      const rangeStart = new Date(annualDate);
+      rangeStart.setDate(rangeStart.getDate() - 30);
+      const rangeEnd = new Date(annualDate);
+      rangeEnd.setDate(rangeEnd.getDate() + 30);
+
+      const existing = await this.prisma.appointment.findFirst({
+        where: {
+          customerId: updated.customerId,
+          workspaceId,
+          type: 'Examination',
+          scheduledAt: {
+            gte: rangeStart,
+            lte: rangeEnd,
+          },
+        },
+      });
+
+      if (!existing) {
+        await this.prisma.appointment.create({
+          data: {
+            customerId: updated.customerId,
+            scheduledAt: annualDate,
+            durationMinutes: 30,
+            type: 'Examination',
+            notes: 'Auto-generated: Annual Eye Checkup reminder (12 months later)',
+            workspaceId,
+          },
+        });
+      }
+    }
+
+    return updated;
   }
 
   async remove(id: string, workspaceId: string) {
