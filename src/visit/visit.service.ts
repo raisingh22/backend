@@ -146,7 +146,17 @@ export class VisitService {
       await this.ordersService.remove(order.id, workspaceId);
     }
 
-    // Delete the visit (cascade will handle child models if set in schema, otherwise set to null or deleted)
+    // Delete prescriptions created in this visit
+    await this.prisma.prescription.deleteMany({
+      where: { visitId: id },
+    });
+
+    // Delete ledger transactions created in this visit
+    await this.prisma.ledgerTransaction.deleteMany({
+      where: { visitId: id },
+    });
+
+    // Delete the visit
     return this.prisma.visit.delete({
       where: { id },
     });

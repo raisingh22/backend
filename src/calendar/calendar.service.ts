@@ -374,6 +374,37 @@ export class CalendarService {
       });
     }
 
+    // 10. Patient Visits
+    const visits = await this.prisma.visit.findMany({
+      where: {
+        workspaceId,
+        date: { gte: start, lte: end },
+      },
+      include: {
+        customer: { select: { id: true, fullName: true, phone: true } },
+      },
+    });
+
+    for (const visit of visits) {
+      events.push({
+        id: `visit-${visit.id}`,
+        sourceId: visit.id,
+        title: `Visit: ${visit.customer.fullName} (${visit.type})`,
+        type: 'VISIT',
+        date: visit.date.toISOString().split('T')[0],
+        time: this.formatTime(visit.date),
+        color: '#14b8a6', // Teal
+        icon: 'medical-outline',
+        details: {
+          customerId: visit.customerId,
+          customerName: visit.customer.fullName,
+          customerPhone: visit.customer.phone,
+          doctorName: visit.doctorName,
+          notes: visit.notes,
+        },
+      });
+    }
+
     return events.sort((a, b) => {
       // Sort by date then by time
       if (a.date !== b.date) return a.date.localeCompare(b.date);
@@ -448,6 +479,11 @@ export class CalendarService {
       where: { workspaceId, scheduledAt: { gte: start, lte: end }, type: 'Follow-up' },
     });
 
+    // 9. Visits today
+    const visitsCount = await this.prisma.visit.count({
+      where: { workspaceId, date: { gte: start, lte: end } },
+    });
+
     return {
       appointments: appointmentsCount,
       ordersReady: ordersReadyCount,
@@ -457,6 +493,7 @@ export class CalendarService {
       lowStock: lowStockCount,
       pendingOrders: pendingSupplierOrdersCount,
       followUps: followUpsCount,
+      visits: visitsCount,
     };
   }
 
