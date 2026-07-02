@@ -26,14 +26,16 @@ async function bootstrap() {
 
   const uniqueId = Date.now().toString();
   const testEmail = `test-${uniqueId}@optiflow-test.com`;
+  const testPhone = `+91${Math.floor(1000000000 + Math.random() * 9000000000).toString().substring(0, 10)}`;
 
   try {
     // 1. REGISTER
     console.log('\nStep 1: Registering new merchant account...');
     const registerRes = await authService.register({
       fullName: 'Test Optician',
+      mobileNumber: testPhone,
       email: testEmail,
-      password: 'password123',
+      password: 'Password123!',
       workspaceName: 'E2E Test Optics',
     });
     const workspaceId = registerRes.workspace.id;
@@ -43,8 +45,8 @@ async function bootstrap() {
     // 2. LOGIN
     console.log('\nStep 2: Authenticating registered user...');
     const loginRes = await authService.login({
-      email: testEmail,
-      password: 'password123',
+      mobileNumber: testPhone,
+      password: 'Password123!',
     });
     if (!loginRes.token) {
       throw new Error('JWT Token generation failed');

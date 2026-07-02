@@ -16,14 +16,16 @@ async function bootstrap() {
 
   const uniqueId = Date.now().toString();
   const testEmail = `test-visit-${uniqueId}@optiflow-test.com`;
+  const testPhone = `+91${Math.floor(1000000000 + Math.random() * 9000000000).toString().substring(0, 10)}`;
 
   try {
     // 1. REGISTER
     console.log('\nStep 1: Registering new merchant account...');
     const registerRes = await authService.register({
       fullName: 'Visit Test Optician',
+      mobileNumber: testPhone,
       email: testEmail,
-      password: 'password123',
+      password: 'Password123!',
       workspaceName: 'E2E Visit Test Optics',
     });
     const workspaceId = registerRes.workspace.id;
