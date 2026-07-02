@@ -21,7 +21,9 @@ import { CalendarModule } from './calendar/calendar.module';
 import { VisitModule } from './visit/visit.module';
 
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { AuditModule } from './audit/audit.module';
+import { AuditInterceptor } from './auth/audit.interceptor';
 
 @Module({
   imports: [
@@ -47,6 +49,7 @@ import { APP_GUARD } from '@nestjs/core';
     LedgerModule,
     CalendarModule,
     VisitModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [
@@ -54,6 +57,10 @@ import { APP_GUARD } from '@nestjs/core';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
     },
   ],
 })

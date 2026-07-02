@@ -10,7 +10,7 @@ export class VisitService {
     private readonly ordersService: OrdersService,
   ) {}
 
-  async create(workspaceId: string, dto: CreateVisitDto) {
+  async create(workspaceId: string, dto: CreateVisitDto, userBranchId?: string) {
     // Verify customer exists and belongs to workspace
     const customer = await this.prisma.customer.findFirst({
       where: { id: dto.customerId, workspaceId },
@@ -27,6 +27,7 @@ export class VisitService {
         doctorName: dto.doctorName || null,
         notes: dto.notes || null,
         workspaceId,
+        branchId: dto.branchId || userBranchId || null,
       },
     });
 
@@ -74,7 +75,7 @@ export class VisitService {
         paymentStatus: 'UNPAID', // calculated inside ordersService
         expectedDeliveryDate: dto.order.expectedDeliveryDate,
         notes: dto.order.notes || '',
-      });
+      }, userBranchId);
 
       // Link order to visit
       await this.prisma.order.update({

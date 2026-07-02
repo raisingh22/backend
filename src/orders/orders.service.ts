@@ -11,7 +11,7 @@ export class OrdersService {
     private readonly ledgerService: LedgerService,
   ) {}
 
-  async create(workspaceId: string, dto: CreateOrderDto) {
+  async create(workspaceId: string, dto: CreateOrderDto, userBranchId?: string) {
     await this.ensureCustomerBelongsToWorkspace(dto.customerId, workspaceId);
     if (dto.prescriptionId) {
       await this.ensurePrescriptionBelongsToCustomer(dto.prescriptionId, dto.customerId, workspaceId);
@@ -55,6 +55,7 @@ export class OrdersService {
         warrantyExpiresAt: calculatedWarrantyExpiresAt,
         notes: dto.notes,
         workspaceId,
+        branchId: userBranchId || dto.branchId || null,
       },
       include: this.defaultInclude(),
     });
@@ -112,27 +113,38 @@ export class OrdersService {
     return order;
   }
 
-  async findAll(workspaceId: string) {
+  async findAll(workspaceId: string, userBranchId?: string) {
     return this.prisma.order.findMany({
-      where: { workspaceId },
+      where: {
+        workspaceId,
+        ...(userBranchId ? { branchId: userBranchId } : {}),
+      },
       include: this.defaultInclude(),
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findAllForCustomer(customerId: string, workspaceId: string) {
+  async findAllForCustomer(customerId: string, workspaceId: string, userBranchId?: string) {
     await this.ensureCustomerBelongsToWorkspace(customerId, workspaceId);
 
     return this.prisma.order.findMany({
-      where: { customerId, workspaceId },
+      where: {
+        customerId,
+        workspaceId,
+        ...(userBranchId ? { branchId: userBranchId } : {}),
+      },
       include: this.defaultInclude(),
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findOne(id: string, workspaceId: string) {
+  async findOne(id: string, workspaceId: string, userBranchId?: string) {
     const order = await this.prisma.order.findFirst({
-      where: { id, workspaceId },
+      where: {
+        id,
+        workspaceId,
+        ...(userBranchId ? { branchId: userBranchId } : {}),
+      },
       include: this.defaultInclude(),
     });
 
@@ -143,8 +155,8 @@ export class OrdersService {
     return order;
   }
 
-  async update(id: string, workspaceId: string, dto: UpdateOrderDto) {
-    const existingOrder = await this.findOne(id, workspaceId);
+  async update(id: string, workspaceId: string, dto: UpdateOrderDto, userBranchId?: string) {
+    const existingOrder = await this.findOne(id, workspaceId, userBranchId);
     if (dto.prescriptionId) {
       await this.ensurePrescriptionBelongsToCustomer(
         dto.prescriptionId,

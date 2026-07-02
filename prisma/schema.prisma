@@ -46,6 +46,9 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  branchId    String?
+  branch      Branch? @relation(fields: [branchId], references: [id])
+
   isMobileVerified  Boolean             @default(false)
   mfaEnabled        Boolean             @default(false)
   mfaSecret         String?
@@ -55,6 +58,7 @@ model User {
   passwordResets    PasswordResetCode[]
 
   @@index([workspaceId])
+  @@index([branchId])
 }
 
 model Task {
@@ -179,6 +183,9 @@ model Order {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
+  branchId    String?
+  branch      Branch? @relation(fields: [branchId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -186,6 +193,7 @@ model Order {
   @@index([customerId])
   @@index([prescriptionId])
   @@index([visitId])
+  @@index([branchId])
   @@index([workspaceId, customerId])
   @@index([workspaceId, status])
   @@index([workspaceId, paymentStatus])
@@ -221,11 +229,15 @@ model Appointment {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
+  branchId    String?
+  branch      Branch? @relation(fields: [branchId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
   @@index([customerId])
+  @@index([branchId])
   @@index([workspaceId, scheduledAt])
   @@index([workspaceId, status])
 }
@@ -264,6 +276,11 @@ model Branch {
   workspaceId   String
   workspace     Workspace @relation(fields: [workspaceId], references: [id])
 
+  users         User[]
+  orders        Order[]
+  visits        Visit[]
+  appointments  Appointment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -279,9 +296,20 @@ enum Role {
 model AuditLog {
   id          String   @id @default(cuid())
   userId      String
-  action      String   // e.g. "DELETE_ORDER", "UPDATE_PRESCRIPTION"
-  details     String?  // JSON context
+  userName    String?  // denormalized for fast display
+  action      String   // e.g. "CREATE", "UPDATE", "DELETE"
+  entityType  String   // e.g. "Order", "Customer", "Appointment"
+  entityId    String?  // ID of the affected entity
+  details     String?  // JSON context (before/after diff)
+  ipAddress   String?
+  userAgent   String?
+  workspaceId String
   createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
 
 model Product {
@@ -434,11 +462,16 @@ model Visit {
 
   workspaceId    String
   workspace      Workspace          @relation(fields: [workspaceId], references: [id])
+
+  branchId       String?
+  branch         Branch?            @relation(fields: [branchId], references: [id])
+
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
   @@index([workspaceId])
   @@index([customerId])
+  @@index([branchId])
   @@index([workspaceId, date])
 }
 

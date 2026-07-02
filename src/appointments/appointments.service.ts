@@ -8,7 +8,7 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 export class AppointmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(workspaceId: string, dto: CreateAppointmentDto) {
+  async create(workspaceId: string, dto: CreateAppointmentDto, userBranchId?: string) {
     const appointment = await this.prisma.appointment.create({
       data: {
         customerId: dto.customerId,
@@ -18,6 +18,7 @@ export class AppointmentsService {
         doctorName: dto.doctorName,
         notes: dto.notes,
         workspaceId,
+        branchId: dto.branchId || userBranchId || null,
       },
       include: {
         customer: { select: { id: true, fullName: true, phone: true } },
@@ -44,6 +45,7 @@ export class AppointmentsService {
             type: 'Follow-up',
             notes: `Auto-generated: Contact Lens ${interval.label} from initial trial on ${new Date(dto.scheduledAt).toLocaleDateString('en-IN')}`,
             workspaceId,
+            branchId: dto.branchId || userBranchId || null,
           },
         });
       }
@@ -52,7 +54,7 @@ export class AppointmentsService {
     return appointment;
   }
 
-  async createWalkIn(workspaceId: string, customerId: string) {
+  async createWalkIn(workspaceId: string, customerId: string, userBranchId?: string) {
     return this.prisma.appointment.create({
       data: {
         customerId,
@@ -61,6 +63,7 @@ export class AppointmentsService {
         type: 'Walk-in',
         status: AppointmentStatus.WALK_IN,
         workspaceId,
+        branchId: userBranchId || null,
       },
       include: {
         customer: { select: { id: true, fullName: true, phone: true } },
@@ -68,8 +71,13 @@ export class AppointmentsService {
     });
   }
 
-  async findAll(workspaceId: string, dateStr?: string) {
+  async findAll(workspaceId: string, dateStr?: string, userBranchId?: string) {
     const where: any = { workspaceId };
+
+    // Branch-level isolation: if user has a branchId, filter to that branch
+    if (userBranchId) {
+      where.branchId = userBranchId;
+    }
 
     if (dateStr) {
       const start = new Date(dateStr);

@@ -121,4 +121,8 @@ export class CreateVisitDto {
   @ValidateNested()
   @Type(() => NestedOrderDto)
   order?: NestedOrderDto;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 }
