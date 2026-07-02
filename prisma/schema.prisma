@@ -33,7 +33,8 @@ model Workspace {
 model User {
   id          String   @id @default(cuid())
   fullName    String
-  email       String   @unique
+  mobileNumber String  @unique
+  email       String?  @unique
   password    String
 
   workspaceId String
@@ -44,6 +45,14 @@ model User {
   schedules   StaffSchedule[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  isMobileVerified  Boolean             @default(false)
+  mfaEnabled        Boolean             @default(false)
+  mfaSecret         String?
+
+  sessions          Session[]
+  verificationCodes VerificationCode[]
+  passwordResets    PasswordResetCode[]
 
   @@index([workspaceId])
 }
@@ -431,4 +440,41 @@ model Visit {
   @@index([workspaceId])
   @@index([customerId])
   @@index([workspaceId, date])
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String   @unique
+  userAgent  String?
+  ipAddress  String?
+  deviceName String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetCode {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

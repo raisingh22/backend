@@ -19,6 +19,14 @@ describe('DashboardService', () => {
     expense: {
       aggregate: jest.fn(),
     },
+    ledger: {
+      aggregate: jest.fn(),
+      findMany: jest.fn(),
+      count: jest.fn(),
+    },
+    ledgerTransaction: {
+      aggregate: jest.fn(),
+    },
   };
 
   beforeEach(async () => {
@@ -68,6 +76,10 @@ describe('DashboardService', () => {
     mockPrismaService.order.findMany.mockResolvedValue(mockRecentOrders);
     mockPrismaService.order.aggregate.mockResolvedValue({ _sum: { paidAmount: 5000 } });
     mockPrismaService.expense.aggregate.mockResolvedValue({ _sum: { amount: 1200 } });
+    mockPrismaService.ledger.aggregate.mockResolvedValue({ _sum: { currentBalance: 800 } });
+    mockPrismaService.ledger.findMany.mockResolvedValue([]);
+    mockPrismaService.ledgerTransaction.aggregate.mockResolvedValue({ _sum: { credit: 300 } });
+    mockPrismaService.ledger.count.mockResolvedValue(0);
 
     const result = await service.getDashboardData(workspaceId);
 
@@ -80,9 +92,15 @@ describe('DashboardService', () => {
         totalRevenue: 5000,
         totalExpenses: 1200,
         netProfit: 3800,
+        totalOutstanding: 800,
+        todayCollections: 300,
+        monthCollections: 300,
+        overdueCustomers: 0,
+        pendingPayments: 0,
       },
       recentCustomers: mockRecentCustomers,
       recentOrders: mockRecentOrders,
+      topDebtors: [],
     });
 
     expect(mockPrismaService.customer.count).toHaveBeenCalledWith({

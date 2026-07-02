@@ -20,8 +20,15 @@ import { LedgerModule } from './ledger/ledger.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { VisitModule } from './visit/visit.module';
 
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
     AuthModule,
     WorkspaceModule,
     PrismaModule,
@@ -42,6 +49,12 @@ import { VisitModule } from './visit/visit.module';
     VisitModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

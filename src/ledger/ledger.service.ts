@@ -13,13 +13,13 @@ export class LedgerService {
   /**
    * Lazily fetches or creates a ledger for a customer.
    */
-  async getOrCreateLedger(customerId: string, workspaceId: string) {
-    let ledger = await this.prisma.ledger.findFirst({
+  async getOrCreateLedger(customerId: string, workspaceId: string, prismaClient: any = this.prisma) {
+    let ledger = await prismaClient.ledger.findFirst({
       where: { customerId, workspaceId },
     });
 
     if (!ledger) {
-      ledger = await this.prisma.ledger.create({
+      ledger = await prismaClient.ledger.create({
         data: {
           customerId,
           workspaceId,
@@ -214,25 +214,27 @@ export class LedgerService {
    * Add a manual payment transaction (Credit).
    */
   async addPayment(workspaceId: string, dto: CreatePaymentDto) {
-    const ledger = await this.getOrCreateLedger(dto.customerId, workspaceId);
+    return this.prisma.$transaction(async (txClient) => {
+      const ledger = await this.getOrCreateLedger(dto.customerId, workspaceId, txClient);
 
-    const tx = await this.prisma.ledgerTransaction.create({
-      data: {
-        ledgerId: ledger.id,
-        type: dto.type as LedgerTransactionType,
-        amount: dto.amount,
-        debit: 0,
-        credit: dto.amount,
-        balance: 0, // Set by recalculate
-        notes: dto.notes,
-        referenceId: dto.referenceId,
-      },
-    });
+      const tx = await txClient.ledgerTransaction.create({
+        data: {
+          ledgerId: ledger.id,
+          type: dto.type as LedgerTransactionType,
+          amount: dto.amount,
+          debit: 0,
+          credit: dto.amount,
+          balance: 0, // Set by recalculate
+          notes: dto.notes,
+          referenceId: dto.referenceId,
+        },
+      });
 
-    await this.recalculateRunningBalances(ledger.id);
+      await this.recalculateRunningBalances(ledger.id, txClient);
 
-    return this.prisma.ledgerTransaction.findUnique({
-      where: { id: tx.id },
+      return txClient.ledgerTransaction.findUnique({
+        where: { id: tx.id },
+      });
     });
   }
 
@@ -240,32 +242,34 @@ export class LedgerService {
    * Add a manual adjustment transaction (Debit or Credit).
    */
   async addAdjustment(workspaceId: string, dto: CreateAdjustmentDto) {
-    const ledger = await this.getOrCreateLedger(dto.customerId, workspaceId);
+    return this.prisma.$transaction(async (txClient) => {
+      const ledger = await this.getOrCreateLedger(dto.customerId, workspaceId, txClient);
 
-    // Determine Debit vs Credit based on transaction type
-    // Debit (money customer owes us): REFUND, OPENING_BALANCE, EXCHANGE (if positive debit)
-    // Credit (reduction of customer due): DISCOUNT, ADJUSTMENT, RETURN
-    const isDebit = ['REFUND', 'OPENING_BALANCE', 'EXCHANGE'].includes(dto.type);
-    const debit = isDebit ? dto.amount : 0;
-    const credit = isDebit ? 0 : dto.amount;
+      // Determine Debit vs Credit based on transaction type
+      // Debit (money customer owes us): REFUND, OPENING_BALANCE, EXCHANGE (if positive debit)
+      // Credit (reduction of customer due): DISCOUNT, ADJUSTMENT, RETURN
+      const isDebit = ['REFUND', 'OPENING_BALANCE', 'EXCHANGE'].includes(dto.type);
+      const debit = isDebit ? dto.amount : 0;
+      const credit = isDebit ? 0 : dto.amount;
 
-    const tx = await this.prisma.ledgerTransaction.create({
-      data: {
-        ledgerId: ledger.id,
-        type: dto.type as LedgerTransactionType,
-        amount: dto.amount,
-        debit,
-        credit,
-        balance: 0, // Set by recalculate
-        notes: dto.notes,
-        referenceId: dto.referenceId,
-      },
-    });
+      const tx = await txClient.ledgerTransaction.create({
+        data: {
+          ledgerId: ledger.id,
+          type: dto.type as LedgerTransactionType,
+          amount: dto.amount,
+          debit,
+          credit,
+          balance: 0, // Set by recalculate
+          notes: dto.notes,
+          referenceId: dto.referenceId,
+        },
+      });
 
-    await this.recalculateRunningBalances(ledger.id);
+      await this.recalculateRunningBalances(ledger.id, txClient);
 
-    return this.prisma.ledgerTransaction.findUnique({
-      where: { id: tx.id },
+      return txClient.ledgerTransaction.findUnique({
+        where: { id: tx.id },
+      });
     });
   }
 
@@ -292,35 +296,37 @@ export class LedgerService {
    * Delete manual ledger transaction and recalculate balances.
    */
   async deleteTransaction(transactionId: string, workspaceId: string) {
-    const tx = await this.prisma.ledgerTransaction.findUnique({
-      where: { id: transactionId },
-      include: { ledger: true },
+    return this.prisma.$transaction(async (txClient) => {
+      const tx = await txClient.ledgerTransaction.findUnique({
+        where: { id: transactionId },
+        include: { ledger: true },
+      });
+
+      if (!tx || tx.ledger.workspaceId !== workspaceId) {
+        throw new NotFoundException(`Transaction with ID "${transactionId}" not found`);
+      }
+
+      // Auto-created invoice/payments linked to actual orders should not be deleted manually
+      // through ledger to prevent discrepancies. They must be managed via the Order.
+      if (tx.type === 'INVOICE_CREATED' && tx.referenceId) {
+        throw new BadRequestException('Cannot delete invoice transactions directly. Delete or modify the Order instead.');
+      }
+
+      await txClient.ledgerTransaction.delete({
+        where: { id: transactionId },
+      });
+
+      await this.recalculateRunningBalances(tx.ledgerId, txClient);
+
+      return { success: true };
     });
-
-    if (!tx || tx.ledger.workspaceId !== workspaceId) {
-      throw new NotFoundException(`Transaction with ID "${transactionId}" not found`);
-    }
-
-    // Auto-created invoice/payments linked to actual orders should not be deleted manually
-    // through ledger to prevent discrepancies. They must be managed via the Order.
-    if (tx.type === 'INVOICE_CREATED' && tx.referenceId) {
-      throw new BadRequestException('Cannot delete invoice transactions directly. Delete or modify the Order instead.');
-    }
-
-    await this.prisma.ledgerTransaction.delete({
-      where: { id: transactionId },
-    });
-
-    await this.recalculateRunningBalances(tx.ledgerId);
-
-    return { success: true };
   }
 
   /**
    * Recalculates all running balances for a ledger and updates current balance.
    */
-  async recalculateRunningBalances(ledgerId: string) {
-    return this.prisma.$transaction(async (tx) => {
+  async recalculateRunningBalances(ledgerId: string, prismaClient: any = this.prisma) {
+    const run = async (tx: any) => {
       const transactions = await tx.ledgerTransaction.findMany({
         where: { ledgerId },
         orderBy: { createdAt: 'asc' },
@@ -339,7 +345,15 @@ export class LedgerService {
         where: { id: ledgerId },
         data: { currentBalance: runningBalance },
       });
-    });
+    };
+
+    if (prismaClient !== this.prisma) {
+      await run(prismaClient);
+    } else {
+      await this.prisma.$transaction(async (tx) => {
+        await run(tx);
+      });
+    }
   }
 
   /**

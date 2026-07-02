@@ -3,8 +3,13 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
+import helmet from 'helmet';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(helmet({
+    contentSecurityPolicy: false, // disable CSP for Swagger UI compatibility in dev/staging
+  }));
   app.enableCors();
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
