@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CreateAdjustmentDto } from './dto/create-adjustment.dto';
@@ -13,7 +17,11 @@ export class LedgerService {
   /**
    * Lazily fetches or creates a ledger for a customer.
    */
-  async getOrCreateLedger(customerId: string, workspaceId: string, prismaClient: any = this.prisma) {
+  async getOrCreateLedger(
+    customerId: string,
+    workspaceId: string,
+    prismaClient: any = this.prisma,
+  ) {
     let ledger = await prismaClient.ledger.findFirst({
       where: { customerId, workspaceId },
     });
@@ -91,7 +99,7 @@ export class LedgerService {
     // Map database structures to convenient UI summary objects
     const data = ledgers.map((l) => {
       const totalOrders = l.customer.orders.length;
-      
+
       // Calculate total purchases (invoices) and total paid (payments)
       let totalPurchase = 0;
       let totalPaid = 0;
@@ -100,7 +108,10 @@ export class LedgerService {
       l.transactions.forEach((tx) => {
         totalPurchase += tx.debit;
         totalPaid += tx.credit;
-        if (tx.credit > 0 && (!lastPaymentDate || tx.createdAt > lastPaymentDate)) {
+        if (
+          tx.credit > 0 &&
+          (!lastPaymentDate || tx.createdAt > lastPaymentDate)
+        ) {
           lastPaymentDate = tx.createdAt;
         }
       });
@@ -170,7 +181,7 @@ export class LedgerService {
     transactions.forEach((tx) => {
       totalPurchase += tx.debit;
       totalPaid += tx.credit;
-      
+
       if (tx.credit > 0) {
         if (!lastPaymentDate || tx.createdAt > lastPaymentDate) {
           lastPaymentDate = tx.createdAt;
@@ -183,12 +194,14 @@ export class LedgerService {
       }
     });
 
-    const averagePurchase = customer.orders.length > 0
-      ? customer.orders.reduce((sum, o) => sum + o.total, 0) / customer.orders.length
-      : 0;
+    const averagePurchase =
+      customer.orders.length > 0
+        ? customer.orders.reduce((sum, o) => sum + o.total, 0) /
+          customer.orders.length
+        : 0;
 
     const pendingBillsCount = customer.orders.filter(
-      (o) => o.paymentStatus !== 'PAID'
+      (o) => o.paymentStatus !== 'PAID',
     ).length;
 
     return {
@@ -215,12 +228,16 @@ export class LedgerService {
    */
   async addPayment(workspaceId: string, dto: CreatePaymentDto) {
     return this.prisma.$transaction(async (txClient) => {
-      const ledger = await this.getOrCreateLedger(dto.customerId, workspaceId, txClient);
+      const ledger = await this.getOrCreateLedger(
+        dto.customerId,
+        workspaceId,
+        txClient,
+      );
 
       const tx = await txClient.ledgerTransaction.create({
         data: {
           ledgerId: ledger.id,
-          type: dto.type as LedgerTransactionType,
+          type: dto.type,
           amount: dto.amount,
           debit: 0,
           credit: dto.amount,
@@ -243,19 +260,25 @@ export class LedgerService {
    */
   async addAdjustment(workspaceId: string, dto: CreateAdjustmentDto) {
     return this.prisma.$transaction(async (txClient) => {
-      const ledger = await this.getOrCreateLedger(dto.customerId, workspaceId, txClient);
+      const ledger = await this.getOrCreateLedger(
+        dto.customerId,
+        workspaceId,
+        txClient,
+      );
 
       // Determine Debit vs Credit based on transaction type
       // Debit (money customer owes us): REFUND, OPENING_BALANCE, EXCHANGE (if positive debit)
       // Credit (reduction of customer due): DISCOUNT, ADJUSTMENT, RETURN
-      const isDebit = ['REFUND', 'OPENING_BALANCE', 'EXCHANGE'].includes(dto.type);
+      const isDebit = ['REFUND', 'OPENING_BALANCE', 'EXCHANGE'].includes(
+        dto.type,
+      );
       const debit = isDebit ? dto.amount : 0;
       const credit = isDebit ? 0 : dto.amount;
 
       const tx = await txClient.ledgerTransaction.create({
         data: {
           ledgerId: ledger.id,
-          type: dto.type as LedgerTransactionType,
+          type: dto.type,
           amount: dto.amount,
           debit,
           credit,
@@ -276,14 +299,20 @@ export class LedgerService {
   /**
    * Update transaction notes.
    */
-  async updateTransaction(transactionId: string, workspaceId: string, dto: UpdateTransactionDto) {
+  async updateTransaction(
+    transactionId: string,
+    workspaceId: string,
+    dto: UpdateTransactionDto,
+  ) {
     const tx = await this.prisma.ledgerTransaction.findUnique({
       where: { id: transactionId },
       include: { ledger: true },
     });
 
     if (!tx || tx.ledger.workspaceId !== workspaceId) {
-      throw new NotFoundException(`Transaction with ID "${transactionId}" not found`);
+      throw new NotFoundException(
+        `Transaction with ID "${transactionId}" not found`,
+      );
     }
 
     return this.prisma.ledgerTransaction.update({
@@ -303,13 +332,17 @@ export class LedgerService {
       });
 
       if (!tx || tx.ledger.workspaceId !== workspaceId) {
-        throw new NotFoundException(`Transaction with ID "${transactionId}" not found`);
+        throw new NotFoundException(
+          `Transaction with ID "${transactionId}" not found`,
+        );
       }
 
       // Auto-created invoice/payments linked to actual orders should not be deleted manually
       // through ledger to prevent discrepancies. They must be managed via the Order.
       if (tx.type === 'INVOICE_CREATED' && tx.referenceId) {
-        throw new BadRequestException('Cannot delete invoice transactions directly. Delete or modify the Order instead.');
+        throw new BadRequestException(
+          'Cannot delete invoice transactions directly. Delete or modify the Order instead.',
+        );
       }
 
       await txClient.ledgerTransaction.delete({
@@ -325,7 +358,10 @@ export class LedgerService {
   /**
    * Recalculates all running balances for a ledger and updates current balance.
    */
-  async recalculateRunningBalances(ledgerId: string, prismaClient: any = this.prisma) {
+  async recalculateRunningBalances(
+    ledgerId: string,
+    prismaClient: any = this.prisma,
+  ) {
     const run = async (tx: any) => {
       const transactions = await tx.ledgerTransaction.findMany({
         where: { ledgerId },
@@ -393,7 +429,9 @@ export class LedgerService {
       const oldestInvoice = invoices[0] || l.transactions[0];
 
       if (oldestInvoice) {
-        const diffTime = Math.abs(now.getTime() - oldestInvoice.createdAt.getTime());
+        const diffTime = Math.abs(
+          now.getTime() - oldestInvoice.createdAt.getTime(),
+        );
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays <= 30) {
@@ -445,7 +483,10 @@ export class LedgerService {
       }),
     ]);
 
-    const totalOutstanding = ledgers.reduce((sum, l) => sum + l.currentBalance, 0);
+    const totalOutstanding = ledgers.reduce(
+      (sum, l) => sum + l.currentBalance,
+      0,
+    );
 
     return {
       summary: {
@@ -455,7 +496,9 @@ export class LedgerService {
         outstandingCustomersCount: ledgers.length,
       },
       aging,
-      overdueCustomers: overdueCustomers.sort((a, b) => b.daysOverdue - a.daysOverdue),
+      overdueCustomers: overdueCustomers.sort(
+        (a, b) => b.daysOverdue - a.daysOverdue,
+      ),
     };
   }
 }

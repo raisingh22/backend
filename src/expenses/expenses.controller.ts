@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { ExpensesService } from './expenses.service';
 
@@ -8,7 +17,10 @@ export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
   @Post()
-  async create(@Request() req: any, @Body() body: { description: string; category: string; amount: number }) {
+  async create(
+    @Request() req: any,
+    @Body() body: { description: string; category: string; amount: number },
+  ) {
     return this.expensesService.create(req.user.workspaceId, body);
   }
 

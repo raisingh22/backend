@@ -1,6 +1,13 @@
 import {
-  Body, Controller, Delete, Get, Param,
-  Patch, Post, Query, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt.guard';
@@ -18,7 +25,11 @@ export class AppointmentsController {
   /** POST /appointments */
   @Post('appointments')
   create(@CurrentUser() user: any, @Body() dto: CreateAppointmentDto) {
-    return this.appointmentsService.create(user.workspaceId, dto, user.branchId);
+    return this.appointmentsService.create(
+      user.workspaceId,
+      dto,
+      user.branchId,
+    );
   }
 
   /** POST /appointments/walk-in */
@@ -27,13 +38,21 @@ export class AppointmentsController {
     @CurrentUser() user: any,
     @Body('customerId') customerId: string,
   ) {
-    return this.appointmentsService.createWalkIn(user.workspaceId, customerId, user.branchId);
+    return this.appointmentsService.createWalkIn(
+      user.workspaceId,
+      customerId,
+      user.branchId,
+    );
   }
 
   /** GET /appointments?date=YYYY-MM-DD */
   @Get('appointments')
   findAll(@CurrentUser() user: any, @Query('date') date?: string) {
-    return this.appointmentsService.findAll(user.workspaceId, date, user.branchId);
+    return this.appointmentsService.findAll(
+      user.workspaceId,
+      date,
+      user.branchId,
+    );
   }
 
   /** GET /customers/:customerId/appointments */
@@ -42,7 +61,10 @@ export class AppointmentsController {
     @CurrentUser() user: any,
     @Param('customerId') customerId: string,
   ) {
-    return this.appointmentsService.findAllForCustomer(customerId, user.workspaceId);
+    return this.appointmentsService.findAllForCustomer(
+      customerId,
+      user.workspaceId,
+    );
   }
 
   /** GET /appointments/:id */

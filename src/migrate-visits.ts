@@ -15,10 +15,13 @@ async function run() {
     orderBy: { createdAt: 'asc' },
   });
 
-  console.log(`Found ${prescriptions.length} prescriptions and ${orders.length} orders without visits.`);
+  console.log(
+    `Found ${prescriptions.length} prescriptions and ${orders.length} orders without visits.`,
+  );
 
   // Group by customerId
-  const customerData: Record<string, { prescriptions: any[]; orders: any[] }> = {};
+  const customerData: Record<string, { prescriptions: any[]; orders: any[] }> =
+    {};
 
   for (const rx of prescriptions) {
     if (!customerData[rx.customerId]) {
@@ -38,7 +41,7 @@ async function run() {
 
   for (const customerId of Object.keys(customerData)) {
     const data = customerData[customerId];
-    
+
     // Find the customer workspaceId (required field on Visit)
     const customer = await prisma.customer.findUnique({
       where: { id: customerId },
@@ -79,7 +82,7 @@ async function run() {
 
       // Find orders for this customer created within 24 hours (86400000 ms) of this prescription
       const rxTime = new Date(rx.createdAt).getTime();
-      const closeOrders = data.orders.filter(o => {
+      const closeOrders = data.orders.filter((o) => {
         if (linkedOrderIds.has(o.id)) return false;
         const oTime = new Date(o.createdAt).getTime();
         return Math.abs(oTime - rxTime) <= 24 * 60 * 60 * 1000;
@@ -90,7 +93,7 @@ async function run() {
           where: { id: order.id },
           data: { visitId: visit.id },
         });
-        
+
         await prisma.ledgerTransaction.updateMany({
           where: { referenceId: order.id },
           data: { visitId: visit.id },
@@ -101,7 +104,9 @@ async function run() {
     }
 
     // Remaining orders get their own separate visits
-    const remainingOrders = data.orders.filter(o => !linkedOrderIds.has(o.id));
+    const remainingOrders = data.orders.filter(
+      (o) => !linkedOrderIds.has(o.id),
+    );
     for (const order of remainingOrders) {
       const visit = await prisma.visit.create({
         data: {
@@ -131,7 +136,7 @@ async function run() {
 }
 
 run()
-  .catch(err => {
+  .catch((err) => {
     console.error('Migration failed:', err);
     process.exit(1);
   })

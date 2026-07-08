@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { VisitService } from './visit.service';
 import { CreateVisitDto } from './dto/create-visit.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
@@ -17,7 +25,10 @@ export class VisitController {
   }
 
   @Get('customer/:customerId')
-  async findByCustomer(@CurrentUser() user: any, @Param('customerId') customerId: string) {
+  async findByCustomer(
+    @CurrentUser() user: any,
+    @Param('customerId') customerId: string,
+  ) {
     return this.visitService.findByCustomer(customerId, user.workspaceId);
   }
 

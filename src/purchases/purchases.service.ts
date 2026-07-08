@@ -5,7 +5,15 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PurchasesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(workspaceId: string, dto: { supplierId: string; totalAmount: number; status: string; items?: string }) {
+  async create(
+    workspaceId: string,
+    dto: {
+      supplierId: string;
+      totalAmount: number;
+      status: string;
+      items?: string;
+    },
+  ) {
     return this.prisma.purchaseOrder.create({
       data: {
         supplierId: dto.supplierId,

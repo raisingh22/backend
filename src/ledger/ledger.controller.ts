@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -32,7 +42,10 @@ export class LedgerController {
   @Get(':customerId')
   @Permissions(Permission.READ_LEDGER)
   findOne(@CurrentUser() user: any, @Param('customerId') customerId: string) {
-    return this.ledgerService.findOneCustomerLedger(customerId, user.workspaceId);
+    return this.ledgerService.findOneCustomerLedger(
+      customerId,
+      user.workspaceId,
+    );
   }
 
   @Post('payment')
@@ -54,13 +67,23 @@ export class LedgerController {
     @Param('transactionId') transactionId: string,
     @Body() dto: UpdateTransactionDto,
   ) {
-    return this.ledgerService.updateTransaction(transactionId, user.workspaceId, dto);
+    return this.ledgerService.updateTransaction(
+      transactionId,
+      user.workspaceId,
+      dto,
+    );
   }
 
   @Delete(':transactionId')
   @Roles('OWNER', 'MANAGER')
   @Permissions(Permission.WRITE_LEDGER)
-  deleteTransaction(@CurrentUser() user: any, @Param('transactionId') transactionId: string) {
-    return this.ledgerService.deleteTransaction(transactionId, user.workspaceId);
+  deleteTransaction(
+    @CurrentUser() user: any,
+    @Param('transactionId') transactionId: string,
+  ) {
+    return this.ledgerService.deleteTransaction(
+      transactionId,
+      user.workspaceId,
+    );
   }
 }

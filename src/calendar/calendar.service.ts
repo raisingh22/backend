@@ -27,7 +27,11 @@ export interface CalendarEvent {
 export class CalendarService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getEvents(workspaceId: string, startDateStr: string, endDateStr: string): Promise<CalendarEvent[]> {
+  async getEvents(
+    workspaceId: string,
+    startDateStr: string,
+    endDateStr: string,
+  ): Promise<CalendarEvent[]> {
     const start = new Date(startDateStr);
     start.setHours(0, 0, 0, 0);
     const end = new Date(endDateStr);
@@ -110,8 +114,8 @@ export class CalendarService {
       events.push({
         id: `delivery-${order.id}`,
         sourceId: order.id,
-        title: isReady 
-          ? `Order Pickup - ${order.customer.fullName} (${order.orderNumber})` 
+        title: isReady
+          ? `Order Pickup - ${order.customer.fullName} (${order.orderNumber})`
           : `Glasses Delivery - ${order.customer.fullName} (${order.orderNumber})`,
         type: isReady ? 'PICKUP' : 'DELIVERY',
         date: order.expectedDeliveryDate!.toISOString().split('T')[0],
@@ -184,7 +188,7 @@ export class CalendarService {
       // Calculate Expiry Date = Rx Date + 12 Months
       const expiryDate = new Date(rx.prescriptionDate);
       expiryDate.setMonth(expiryDate.getMonth() + 12);
-      
+
       // Reminder date = Expiry Date - 30 Days
       const reminderDate = new Date(expiryDate);
       reminderDate.setDate(reminderDate.getDate() - 30);
@@ -235,7 +239,7 @@ export class CalendarService {
           customerId: order.customerId,
           customerName: order.customer.fullName,
           customerPhone: order.customer.phone,
-          notes: `Frames: ${order.frameName || 'N/A'}, Coating: ${order.lensCoating || 'N/A'}`
+          notes: `Frames: ${order.frameName || 'N/A'}, Coating: ${order.lensCoating || 'N/A'}`,
         },
       });
     }
@@ -258,9 +262,12 @@ export class CalendarService {
     for (const cust of customers) {
       const dob = cust.dateOfBirth!;
       // Find matching dates in range
-      let checkDate = new Date(start);
+      const checkDate = new Date(start);
       while (checkDate <= end) {
-        if (checkDate.getMonth() === dob.getMonth() && checkDate.getDate() === dob.getDate()) {
+        if (
+          checkDate.getMonth() === dob.getMonth() &&
+          checkDate.getDate() === dob.getDate()
+        ) {
           events.push({
             id: `birthday-${cust.id}-${checkDate.toISOString().split('T')[0]}`,
             sourceId: cust.id,
@@ -339,7 +346,10 @@ export class CalendarService {
       events.push({
         id: `staff-schedule-${sched.id}`,
         sourceId: sched.id,
-        title: sched.type === 'HOLIDAY' ? `Holiday: ${sched.notes || 'Clinic Closed'}` : `${sched.type === 'LEAVE' ? 'Leave' : 'Shift'}: ${sched.user.fullName}`,
+        title:
+          sched.type === 'HOLIDAY'
+            ? `Holiday: ${sched.notes || 'Clinic Closed'}`
+            : `${sched.type === 'LEAVE' ? 'Leave' : 'Shift'}: ${sched.user.fullName}`,
         type,
         date: sched.date.toISOString().split('T')[0],
         color,
@@ -459,9 +469,11 @@ export class CalendarService {
       where: { workspaceId, dateOfBirth: { not: null } },
       select: { dateOfBirth: true },
     });
-    const birthdaysCount = allCustomers.filter(c => {
+    const birthdaysCount = allCustomers.filter((c) => {
       const dob = c.dateOfBirth!;
-      return dob.getDate() === day.getDate() && dob.getMonth() === day.getMonth();
+      return (
+        dob.getDate() === day.getDate() && dob.getMonth() === day.getMonth()
+      );
     }).length;
 
     // 6. Low stock products (quantity < 5)
@@ -476,7 +488,11 @@ export class CalendarService {
 
     // 8. Follow ups today
     const followUpsCount = await this.prisma.appointment.count({
-      where: { workspaceId, scheduledAt: { gte: start, lte: end }, type: 'Follow-up' },
+      where: {
+        workspaceId,
+        scheduledAt: { gte: start, lte: end },
+        type: 'Follow-up',
+      },
     });
 
     // 9. Visits today
@@ -498,7 +514,13 @@ export class CalendarService {
   }
 
   // Reminder CRUD
-  async createReminder(workspaceId: string, title: string, notes: string | null, dateStr: string, timeStr: string | null) {
+  async createReminder(
+    workspaceId: string,
+    title: string,
+    notes: string | null,
+    dateStr: string,
+    timeStr: string | null,
+  ) {
     return this.prisma.calendarReminder.create({
       data: {
         title,
@@ -529,7 +551,13 @@ export class CalendarService {
   }
 
   // Staff Schedule CRUD
-  async createStaffSchedule(workspaceId: string, userId: string, dateStr: string, type: string, notes: string | null) {
+  async createStaffSchedule(
+    workspaceId: string,
+    userId: string,
+    dateStr: string,
+    type: string,
+    notes: string | null,
+  ) {
     return this.prisma.staffSchedule.create({
       data: {
         userId,

@@ -1,5 +1,13 @@
 import { Type } from 'class-transformer';
-import { IsISO8601, IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsISO8601,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CreatePrescriptionDto {
   @IsOptional()

@@ -70,15 +70,29 @@ describe('DashboardService', () => {
     });
 
     const mockRecentCustomers = [{ id: 'c1', fullName: 'Customer One' }];
-    const mockRecentOrders = [{ id: 'o1', orderNumber: 'ORD-000001', customer: { id: 'c1', fullName: 'Customer One' } }];
+    const mockRecentOrders = [
+      {
+        id: 'o1',
+        orderNumber: 'ORD-000001',
+        customer: { id: 'c1', fullName: 'Customer One' },
+      },
+    ];
 
     mockPrismaService.customer.findMany.mockResolvedValue(mockRecentCustomers);
     mockPrismaService.order.findMany.mockResolvedValue(mockRecentOrders);
-    mockPrismaService.order.aggregate.mockResolvedValue({ _sum: { paidAmount: 5000 } });
-    mockPrismaService.expense.aggregate.mockResolvedValue({ _sum: { amount: 1200 } });
-    mockPrismaService.ledger.aggregate.mockResolvedValue({ _sum: { currentBalance: 800 } });
+    mockPrismaService.order.aggregate.mockResolvedValue({
+      _sum: { paidAmount: 5000 },
+    });
+    mockPrismaService.expense.aggregate.mockResolvedValue({
+      _sum: { amount: 1200 },
+    });
+    mockPrismaService.ledger.aggregate.mockResolvedValue({
+      _sum: { currentBalance: 800 },
+    });
     mockPrismaService.ledger.findMany.mockResolvedValue([]);
-    mockPrismaService.ledgerTransaction.aggregate.mockResolvedValue({ _sum: { credit: 300 } });
+    mockPrismaService.ledgerTransaction.aggregate.mockResolvedValue({
+      _sum: { credit: 300 },
+    });
     mockPrismaService.ledger.count.mockResolvedValue(0);
 
     const result = await service.getDashboardData(workspaceId);

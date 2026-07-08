@@ -1,4 +1,10 @@
-import { Injectable, ConflictException, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -78,7 +84,9 @@ export class AuthService {
         tokenHash: '',
         userAgent: clientInfo?.userAgent,
         ipAddress: clientInfo?.ipAddress,
-        deviceName: clientInfo?.deviceName || this.extractDeviceName(clientInfo?.userAgent),
+        deviceName:
+          clientInfo?.deviceName ||
+          this.extractDeviceName(clientInfo?.userAgent),
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       },
     });
@@ -86,7 +94,7 @@ export class AuthService {
     const refreshToken = jwt.sign(
       { userId: user.id, workspaceId: workspace.id, sessionId: session.id },
       process.env.JWT_SECRET || 'super-secret-key-change-in-production',
-      { expiresIn: '7d' }
+      { expiresIn: '7d' },
     );
 
     await this.prisma.session.update({
@@ -97,7 +105,7 @@ export class AuthService {
     const token = jwt.sign(
       { userId: user.id, workspaceId: workspace.id },
       process.env.JWT_SECRET || 'super-secret-key-change-in-production',
-      { expiresIn: '15m' } // Short-lived access token
+      { expiresIn: '15m' }, // Short-lived access token
     );
 
     // Generate & send verification code via SMS
@@ -138,7 +146,9 @@ export class AuthService {
         tokenHash: '',
         userAgent: clientInfo?.userAgent,
         ipAddress: clientInfo?.ipAddress,
-        deviceName: clientInfo?.deviceName || this.extractDeviceName(clientInfo?.userAgent),
+        deviceName:
+          clientInfo?.deviceName ||
+          this.extractDeviceName(clientInfo?.userAgent),
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       },
     });
@@ -146,7 +156,7 @@ export class AuthService {
     const refreshToken = jwt.sign(
       { userId: user.id, workspaceId: user.workspaceId, sessionId: session.id },
       process.env.JWT_SECRET || 'super-secret-key-change-in-production',
-      { expiresIn: '7d' }
+      { expiresIn: '7d' },
     );
 
     await this.prisma.session.update({
@@ -157,7 +167,7 @@ export class AuthService {
     const token = jwt.sign(
       { userId: user.id, workspaceId: user.workspaceId },
       process.env.JWT_SECRET || 'super-secret-key-change-in-production',
-      { expiresIn: '15m' }
+      { expiresIn: '15m' },
     );
 
     return {
@@ -170,7 +180,10 @@ export class AuthService {
   async refresh(refreshToken: string) {
     let payload: any;
     try {
-      payload = jwt.verify(refreshToken, process.env.JWT_SECRET || 'super-secret-key-change-in-production');
+      payload = jwt.verify(
+        refreshToken,
+        process.env.JWT_SECRET || 'super-secret-key-change-in-production',
+      );
     } catch (err) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
@@ -195,20 +208,26 @@ export class AuthService {
       await this.prisma.session.deleteMany({
         where: { userId: session.userId },
       });
-      throw new UnauthorizedException('Token reuse detected. All sessions revoked.');
+      throw new UnauthorizedException(
+        'Token reuse detected. All sessions revoked.',
+      );
     }
 
     // Rotate token
     const newRefreshToken = jwt.sign(
-      { userId: session.userId, workspaceId: session.user.workspaceId, sessionId: session.id },
+      {
+        userId: session.userId,
+        workspaceId: session.user.workspaceId,
+        sessionId: session.id,
+      },
       process.env.JWT_SECRET || 'super-secret-key-change-in-production',
-      { expiresIn: '7d' }
+      { expiresIn: '7d' },
     );
 
     const newAccessToken = jwt.sign(
       { userId: session.userId, workspaceId: session.user.workspaceId },
       process.env.JWT_SECRET || 'super-secret-key-change-in-production',
-      { expiresIn: '15m' }
+      { expiresIn: '15m' },
     );
 
     await this.prisma.session.update({
@@ -228,17 +247,22 @@ export class AuthService {
   async logout(refreshToken: string) {
     let payload: any;
     try {
-      payload = jwt.verify(refreshToken, process.env.JWT_SECRET || 'super-secret-key-change-in-production');
+      payload = jwt.verify(
+        refreshToken,
+        process.env.JWT_SECRET || 'super-secret-key-change-in-production',
+      );
     } catch (err) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
     if (payload.sessionId) {
-      await this.prisma.session.delete({
-        where: { id: payload.sessionId },
-      }).catch(() => {
-        // ignore delete failures if already deleted
-      });
+      await this.prisma.session
+        .delete({
+          where: { id: payload.sessionId },
+        })
+        .catch(() => {
+          // ignore delete failures if already deleted
+        });
     }
   }
 
@@ -265,7 +289,9 @@ export class AuthService {
     });
 
     // Simulate sending SMS
-    console.log(`[SMS OTP Simulator] Sending verification code ${code} to ${mobileNumber}`);
+    console.log(
+      `[SMS OTP Simulator] Sending verification code ${code} to ${mobileNumber}`,
+    );
   }
 
   async verifyMobile(dto: VerifyMobileDto) {
@@ -309,7 +335,9 @@ export class AuthService {
 
     if (!user) {
       // Return same response to prevent enumeration
-      return { message: 'If the mobile number exists, an OTP reset code has been sent' };
+      return {
+        message: 'If the mobile number exists, an OTP reset code has been sent',
+      };
     }
 
     // Revoke old reset codes
@@ -327,8 +355,12 @@ export class AuthService {
     });
 
     // Simulate sending SMS
-    console.log(`[SMS OTP Simulator] Sending password reset code ${code} to ${dto.mobileNumber}`);
-    return { message: 'If the mobile number exists, an OTP reset code has been sent' };
+    console.log(
+      `[SMS OTP Simulator] Sending password reset code ${code} to ${dto.mobileNumber}`,
+    );
+    return {
+      message: 'If the mobile number exists, an OTP reset code has been sent',
+    };
   }
 
   async resetPassword(dto: ResetPasswordDto) {

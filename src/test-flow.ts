@@ -26,7 +26,9 @@ async function bootstrap() {
 
   const uniqueId = Date.now().toString();
   const testEmail = `test-${uniqueId}@optiflow-test.com`;
-  const testPhone = `+91${Math.floor(1000000000 + Math.random() * 9000000000).toString().substring(0, 10)}`;
+  const testPhone = `+91${Math.floor(1000000000 + Math.random() * 9000000000)
+    .toString()
+    .substring(0, 10)}`;
 
   try {
     // 1. REGISTER
@@ -40,7 +42,9 @@ async function bootstrap() {
     });
     const workspaceId = registerRes.workspace.id;
     const userId = registerRes.user.id;
-    console.log(`✅ Registration Success! Workspace ID: ${workspaceId}, User ID: ${userId}`);
+    console.log(
+      `✅ Registration Success! Workspace ID: ${workspaceId}, User ID: ${userId}`,
+    );
 
     // 2. LOGIN
     console.log('\nStep 2: Authenticating registered user...');
@@ -62,24 +66,34 @@ async function bootstrap() {
       notes: 'Testing offline queue and PDF invoicing features',
       tags: ['VIP', 'Progressive'],
     });
-    console.log(`✅ Customer Created! ID: ${customer.id}, Name: ${customer.fullName}`);
+    console.log(
+      `✅ Customer Created! ID: ${customer.id}, Name: ${customer.fullName}`,
+    );
 
     // 4. ADD PRESCRIPTION
-    console.log('\nStep 4: Recording a clinical eye examination prescription...');
-    const prescription = await prescriptionsService.create(customer.id, workspaceId, {
-      rightSphere: -2.5,
-      rightCylinder: -0.5,
-      rightAxis: 90,
-      rightAdd: 1.5,
-      leftSphere: -2.25,
-      leftCylinder: -0.75,
-      leftAxis: 95,
-      leftAdd: 1.5,
-      pupillaryDistance: 64,
-      doctorName: 'Dr. Eyecare Specialist',
-      notes: 'Anti-reflective coating recommended',
-    });
-    console.log(`✅ Prescription Created! ID: ${prescription.id}, OD: SPH -2.5, OS: SPH -2.25`);
+    console.log(
+      '\nStep 4: Recording a clinical eye examination prescription...',
+    );
+    const prescription = await prescriptionsService.create(
+      customer.id,
+      workspaceId,
+      {
+        rightSphere: -2.5,
+        rightCylinder: -0.5,
+        rightAxis: 90,
+        rightAdd: 1.5,
+        leftSphere: -2.25,
+        leftCylinder: -0.75,
+        leftAxis: 95,
+        leftAdd: 1.5,
+        pupillaryDistance: 64,
+        doctorName: 'Dr. Eyecare Specialist',
+        notes: 'Anti-reflective coating recommended',
+      },
+    );
+    console.log(
+      `✅ Prescription Created! ID: ${prescription.id}, OD: SPH -2.5, OS: SPH -2.25`,
+    );
 
     // 5. PLACE ORDER
     console.log('\nStep 5: Booking a specs order linked to prescription...');
@@ -97,39 +111,62 @@ async function bootstrap() {
       total: 11800,
       paidAmount: 5000,
     });
-    console.log(`✅ Order Created! Order Number: ${order.orderNumber}, Total: ₹${order.total}, Balance Due: ₹${order.balanceAmount}`);
+    console.log(
+      `✅ Order Created! Order Number: ${order.orderNumber}, Total: ₹${order.total}, Balance Due: ₹${order.balanceAmount}`,
+    );
 
     // 5.5. LEDGER AUTOMATION VERIFICATION
     console.log('\nStep 5.5: Verifying automated customer ledger sync...');
-    const ledgerDetails = await ledgerService.findOneCustomerLedger(customer.id, workspaceId);
-    console.log(`✅ Ledger fetched. Current Balance: ₹${ledgerDetails.summary.currentOutstandingBalance}`);
-    console.log(`✅ Ledger Transactions Count: ${ledgerDetails.transactions.length}`);
+    const ledgerDetails = await ledgerService.findOneCustomerLedger(
+      customer.id,
+      workspaceId,
+    );
+    console.log(
+      `✅ Ledger fetched. Current Balance: ₹${ledgerDetails.summary.currentOutstandingBalance}`,
+    );
+    console.log(
+      `✅ Ledger Transactions Count: ${ledgerDetails.transactions.length}`,
+    );
 
     if (ledgerDetails.summary.currentOutstandingBalance !== 6800) {
-      throw new Error(`Outstanding ledger balance expected 6800, got ${ledgerDetails.summary.currentOutstandingBalance}`);
+      throw new Error(
+        `Outstanding ledger balance expected 6800, got ${ledgerDetails.summary.currentOutstandingBalance}`,
+      );
     }
     if (ledgerDetails.transactions.length !== 2) {
-      throw new Error(`Expected 2 ledger transactions, got ${ledgerDetails.transactions.length}`);
+      throw new Error(
+        `Expected 2 ledger transactions, got ${ledgerDetails.transactions.length}`,
+      );
     }
-    const invoiceTx = ledgerDetails.transactions.find(t => t.type === 'INVOICE_CREATED');
-    const paymentTx = ledgerDetails.transactions.find(t => t.type === 'ADVANCE_PAYMENT');
+    const invoiceTx = ledgerDetails.transactions.find(
+      (t) => t.type === 'INVOICE_CREATED',
+    );
+    const paymentTx = ledgerDetails.transactions.find(
+      (t) => t.type === 'ADVANCE_PAYMENT',
+    );
     if (!invoiceTx || !paymentTx) {
-      throw new Error('Ledger transactions missing auto-created invoice or payment');
+      throw new Error(
+        'Ledger transactions missing auto-created invoice or payment',
+      );
     }
     if (invoiceTx.debit !== 11800 || paymentTx.credit !== 5000) {
-      throw new Error(`Ledger entry amounts incorrect: invoice debit ${invoiceTx.debit}, payment credit ${paymentTx.credit}`);
+      throw new Error(
+        `Ledger entry amounts incorrect: invoice debit ${invoiceTx.debit}, payment credit ${paymentTx.credit}`,
+      );
     }
     console.log('✅ Ledger automation successfully validated!');
 
     // 6. LOYALTY POINTS VERIFICATION
     console.log('\nStep 6: Verifying loyalty points awarded to customer...');
     const updatedCustomer = await prismaService.customer.findUnique({
-      where: { id: customer.id }
+      where: { id: customer.id },
     });
     if (!updatedCustomer) {
       throw new Error('Updated customer profile not found');
     }
-    console.log(`✅ Loyalty Points: ${updatedCustomer.loyaltyPoints} (Expected: 50), Tier: ${updatedCustomer.membershipTier}`);
+    console.log(
+      `✅ Loyalty Points: ${updatedCustomer.loyaltyPoints} (Expected: 50), Tier: ${updatedCustomer.membershipTier}`,
+    );
     if (updatedCustomer.loyaltyPoints !== 50) {
       throw new Error('Loyalty points allocation incorrect');
     }
@@ -141,22 +178,31 @@ async function bootstrap() {
       amount: 5000,
       category: 'RENT',
     });
-    console.log(`✅ Expense Logged! Description: ${expense.description}, Amount: ₹${expense.amount}`);
+    console.log(
+      `✅ Expense Logged! Description: ${expense.description}, Amount: ₹${expense.amount}`,
+    );
 
     const supplier = await suppliersService.create(workspaceId, {
       name: 'Zeiss Lenses Inc',
       contactPerson: 'Aditya Prasad',
       phone: '+919999900000',
     });
-    console.log(`✅ Supplier Registered! Name: ${supplier.name}, Contact: ${supplier.contactPerson}`);
+    console.log(
+      `✅ Supplier Registered! Name: ${supplier.name}, Contact: ${supplier.contactPerson}`,
+    );
 
     // 8. ADVANCED FINANCIAL ANALYTICS
     console.log('\nStep 8: Fetching financial overview aggregates...');
     const dashboardData = await dashboardService.getDashboardData(workspaceId);
     console.log('✅ Financial Aggregations successfully fetched!');
-    console.log(`📈 Revenue: ₹${dashboardData.stats.totalRevenue}, Expenses: ₹${dashboardData.stats.totalExpenses}, Net Profit: ₹${dashboardData.stats.netProfit}`);
+    console.log(
+      `📈 Revenue: ₹${dashboardData.stats.totalRevenue}, Expenses: ₹${dashboardData.stats.totalExpenses}, Net Profit: ₹${dashboardData.stats.netProfit}`,
+    );
 
-    if (dashboardData.stats.totalRevenue !== 5000 || dashboardData.stats.totalExpenses !== 5000) {
+    if (
+      dashboardData.stats.totalRevenue !== 5000 ||
+      dashboardData.stats.totalExpenses !== 5000
+    ) {
       throw new Error('Financial aggregates calculated incorrectly');
     }
 
@@ -171,8 +217,9 @@ async function bootstrap() {
     await prismaService.user.delete({ where: { id: userId } });
     await prismaService.workspace.delete({ where: { id: workspaceId } });
     console.log('🧹 Cleanup Completed successfully.');
-    console.log('\n🎉 ALL BUSINESS FLOW E2E TESTS COMPLETED WITH 100% SUCCESS!');
-
+    console.log(
+      '\n🎉 ALL BUSINESS FLOW E2E TESTS COMPLETED WITH 100% SUCCESS!',
+    );
   } catch (error) {
     console.error('❌ E2E FLOW TEST FAILED:', error);
     process.exit(1);

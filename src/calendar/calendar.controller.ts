@@ -1,6 +1,12 @@
 import {
-  Body, Controller, Delete, Get, Param,
-  Post, Query, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt.guard';
@@ -39,7 +45,13 @@ export class CalendarController {
     @Body('date') date: string,
     @Body('time') time: string | null,
   ) {
-    return this.calendarService.createReminder(user.workspaceId, title, notes, date, time);
+    return this.calendarService.createReminder(
+      user.workspaceId,
+      title,
+      notes,
+      date,
+      time,
+    );
   }
 
   @Get('reminders')
@@ -61,7 +73,13 @@ export class CalendarController {
     @Body('type') type: string,
     @Body('notes') notes: string | null,
   ) {
-    return this.calendarService.createStaffSchedule(user.workspaceId, userId, date, type, notes);
+    return this.calendarService.createStaffSchedule(
+      user.workspaceId,
+      userId,
+      date,
+      type,
+      notes,
+    );
   }
 
   @Get('staff-schedule')

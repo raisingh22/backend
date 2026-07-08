@@ -1,4 +1,11 @@
-import { IsEnum, IsInt, IsISO8601, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsISO8601,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { AppointmentStatus } from '@prisma/client';
 
 export class UpdateAppointmentDto {

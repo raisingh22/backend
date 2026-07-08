@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { ConflictException, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -101,12 +106,18 @@ describe('AuthService', () => {
       mockPrismaService.workspace.create.mockResolvedValue(mockWorkspace);
       mockPrismaService.session.create.mockResolvedValue(mockSession);
       mockPrismaService.session.update.mockResolvedValue(mockSession);
-      mockPrismaService.verificationCode.deleteMany.mockResolvedValue({ count: 0 });
-      mockPrismaService.verificationCode.create.mockResolvedValue({ id: 'code-id' });
+      mockPrismaService.verificationCode.deleteMany.mockResolvedValue({
+        count: 0,
+      });
+      mockPrismaService.verificationCode.create.mockResolvedValue({
+        id: 'code-id',
+      });
 
       const result = await service.register(registerDto);
 
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { mobileNumber: registerDto.mobileNumber } });
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { mobileNumber: registerDto.mobileNumber },
+      });
       expect(prisma.workspace.create).toHaveBeenCalled();
       expect(prisma.session.create).toHaveBeenCalled();
       expect(result.token).toBeDefined();
@@ -122,9 +133,13 @@ describe('AuthService', () => {
         workspaceName: 'John Workspace',
       };
 
-      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'existing-id' });
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'existing-id',
+      });
 
-      await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -170,20 +185,29 @@ describe('AuthService', () => {
 
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
   describe('refresh', () => {
     it('should rotate access and refresh tokens', async () => {
       const oldRefreshToken = jwt.sign(
-        { userId: 'user-id', workspaceId: 'workspace-id', sessionId: 'session-id' },
+        {
+          userId: 'user-id',
+          workspaceId: 'workspace-id',
+          sessionId: 'session-id',
+        },
         process.env.JWT_SECRET || 'super-secret-key-change-in-production',
-        { expiresIn: '7d' }
+        { expiresIn: '7d' },
       );
 
       const crypto = require('crypto');
-      const oldHash = crypto.createHash('sha256').update(oldRefreshToken).digest('hex');
+      const oldHash = crypto
+        .createHash('sha256')
+        .update(oldRefreshToken)
+        .digest('hex');
 
       const mockSession = {
         id: 'session-id',
@@ -224,9 +248,16 @@ describe('AuthService', () => {
       };
 
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
-      mockPrismaService.verificationCode.findFirst.mockResolvedValue(mockVerificationRecord);
-      mockPrismaService.user.update.mockResolvedValue({ ...mockUser, isMobileVerified: true });
-      mockPrismaService.verificationCode.delete.mockResolvedValue({ id: 'ver-id' });
+      mockPrismaService.verificationCode.findFirst.mockResolvedValue(
+        mockVerificationRecord,
+      );
+      mockPrismaService.user.update.mockResolvedValue({
+        ...mockUser,
+        isMobileVerified: true,
+      });
+      mockPrismaService.verificationCode.delete.mockResolvedValue({
+        id: 'ver-id',
+      });
 
       const result = await service.verifyMobile(verifyMobileDto);
 
@@ -246,17 +277,28 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue({ id: 'user-id' });
       mockPrismaService.verificationCode.findFirst.mockResolvedValue(null);
 
-      await expect(service.verifyMobile(verifyMobileDto)).rejects.toThrow(BadRequestException);
+      await expect(service.verifyMobile(verifyMobileDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('forgot and reset password', () => {
     it('should generate reset code and log message', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'user-id', mobileNumber: '+919876543210' });
-      mockPrismaService.passwordResetCode.deleteMany.mockResolvedValue({ count: 0 });
-      mockPrismaService.passwordResetCode.create.mockResolvedValue({ id: 'reset-id' });
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'user-id',
+        mobileNumber: '+919876543210',
+      });
+      mockPrismaService.passwordResetCode.deleteMany.mockResolvedValue({
+        count: 0,
+      });
+      mockPrismaService.passwordResetCode.create.mockResolvedValue({
+        id: 'reset-id',
+      });
 
-      const result = await service.forgotPassword({ mobileNumber: '+919876543210' });
+      const result = await service.forgotPassword({
+        mobileNumber: '+919876543210',
+      });
       expect(result.message).toContain('sent');
     });
 
@@ -275,15 +317,21 @@ describe('AuthService', () => {
       };
 
       mockPrismaService.user.findUnique.mockResolvedValue({ id: 'user-id' });
-      mockPrismaService.passwordResetCode.findFirst.mockResolvedValue(mockResetRecord);
+      mockPrismaService.passwordResetCode.findFirst.mockResolvedValue(
+        mockResetRecord,
+      );
       mockPrismaService.user.update.mockResolvedValue({ id: 'user-id' });
-      mockPrismaService.passwordResetCode.delete.mockResolvedValue({ id: 'reset-id' });
+      mockPrismaService.passwordResetCode.delete.mockResolvedValue({
+        id: 'reset-id',
+      });
       mockPrismaService.session.deleteMany.mockResolvedValue({ count: 5 });
 
       const result = await service.resetPassword(resetPasswordDto);
 
       expect(result.message).toBe('Password reset successfully');
-      expect(prisma.session.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-id' } });
+      expect(prisma.session.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-id' },
+      });
     });
   });
 
@@ -292,8 +340,9 @@ describe('AuthService', () => {
       mockPrismaService.session.deleteMany.mockResolvedValue({ count: 3 });
       const result = await service.logoutAll('user-id');
       expect(result.message).toContain('Logged out from all devices');
-      expect(prisma.session.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-id' } });
+      expect(prisma.session.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-id' },
+      });
     });
   });
 });
-

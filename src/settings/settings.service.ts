@@ -9,7 +9,7 @@ export class SettingsService {
     const settings = await this.prisma.workspaceSettings.findUnique({
       where: { workspaceId },
     });
-    
+
     // Auto-create settings if they don't exist yet
     if (!settings) {
       return await this.prisma.workspaceSettings.create({
@@ -51,7 +51,15 @@ export class SettingsService {
     });
   }
 
-  async createBranch(workspaceId: string, data: { name: string; address: string; phone?: string; businessHours?: string }) {
+  async createBranch(
+    workspaceId: string,
+    data: {
+      name: string;
+      address: string;
+      phone?: string;
+      businessHours?: string;
+    },
+  ) {
     return this.prisma.branch.create({
       data: {
         ...data,

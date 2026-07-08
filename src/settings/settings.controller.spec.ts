@@ -43,7 +43,12 @@ describe('SettingsController', () => {
 
   describe('getTaxSettings', () => {
     it('should return tax settings for the user workspace', async () => {
-      const mockTaxSettings = { id: '1', taxRate: 18, taxIdNumber: 'GST123', workspaceId: 'w1' };
+      const mockTaxSettings = {
+        id: '1',
+        taxRate: 18,
+        taxIdNumber: 'GST123',
+        workspaceId: 'w1',
+      };
       mockSettingsService.getTaxSettings.mockResolvedValue(mockTaxSettings);
 
       const req = { user: { workspaceId: 'w1' } };

@@ -11,10 +11,18 @@ export class OrdersService {
     private readonly ledgerService: LedgerService,
   ) {}
 
-  async create(workspaceId: string, dto: CreateOrderDto, userBranchId?: string) {
+  async create(
+    workspaceId: string,
+    dto: CreateOrderDto,
+    userBranchId?: string,
+  ) {
     await this.ensureCustomerBelongsToWorkspace(dto.customerId, workspaceId);
     if (dto.prescriptionId) {
-      await this.ensurePrescriptionBelongsToCustomer(dto.prescriptionId, dto.customerId, workspaceId);
+      await this.ensurePrescriptionBelongsToCustomer(
+        dto.prescriptionId,
+        dto.customerId,
+        workspaceId,
+      );
     }
 
     const subtotal = dto.subtotal ?? 0;
@@ -26,7 +34,9 @@ export class OrdersService {
     const balanceAmount = Math.max(total - paidAmount, 0);
     const calculatedPaymentDueDate = (dto as any).paymentDueDate
       ? new Date((dto as any).paymentDueDate)
-      : (balanceAmount > 0 ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) : null);
+      : balanceAmount > 0
+        ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+        : null;
     const calculatedWarrantyExpiresAt = (dto as any).warrantyExpiresAt
       ? new Date((dto as any).warrantyExpiresAt)
       : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
@@ -49,8 +59,11 @@ export class OrdersService {
         paidAmount,
         balanceAmount,
         status: dto.status ?? 'PENDING',
-        paymentStatus: dto.paymentStatus ?? this.resolvePaymentStatus(total, paidAmount),
-        expectedDeliveryDate: dto.expectedDeliveryDate ? new Date(dto.expectedDeliveryDate) : undefined,
+        paymentStatus:
+          dto.paymentStatus ?? this.resolvePaymentStatus(total, paidAmount),
+        expectedDeliveryDate: dto.expectedDeliveryDate
+          ? new Date(dto.expectedDeliveryDate)
+          : undefined,
         paymentDueDate: calculatedPaymentDueDate,
         warrantyExpiresAt: calculatedWarrantyExpiresAt,
         notes: dto.notes,
@@ -73,8 +86,11 @@ export class OrdersService {
 
     // Ledger Automation: Create Ledger entries for the Order Invoice and Payment
     try {
-      const ledger = await this.ledgerService.getOrCreateLedger(order.customerId, workspaceId);
-      
+      const ledger = await this.ledgerService.getOrCreateLedger(
+        order.customerId,
+        workspaceId,
+      );
+
       // 1. Create Invoice debit entry
       await this.prisma.ledgerTransaction.create({
         data: {
@@ -124,7 +140,11 @@ export class OrdersService {
     });
   }
 
-  async findAllForCustomer(customerId: string, workspaceId: string, userBranchId?: string) {
+  async findAllForCustomer(
+    customerId: string,
+    workspaceId: string,
+    userBranchId?: string,
+  ) {
     await this.ensureCustomerBelongsToWorkspace(customerId, workspaceId);
 
     return this.prisma.order.findMany({
@@ -155,7 +175,12 @@ export class OrdersService {
     return order;
   }
 
-  async update(id: string, workspaceId: string, dto: UpdateOrderDto, userBranchId?: string) {
+  async update(
+    id: string,
+    workspaceId: string,
+    dto: UpdateOrderDto,
+    userBranchId?: string,
+  ) {
     const existingOrder = await this.findOne(id, workspaceId, userBranchId);
     if (dto.prescriptionId) {
       await this.ensurePrescriptionBelongsToCustomer(
@@ -189,10 +214,17 @@ export class OrdersService {
         paidAmount,
         balanceAmount: Math.max(total - paidAmount, 0),
         status: dto.status,
-        paymentStatus: dto.paymentStatus ?? this.resolvePaymentStatus(total, paidAmount),
-        expectedDeliveryDate: dto.expectedDeliveryDate ? new Date(dto.expectedDeliveryDate) : undefined,
-        paymentDueDate: (dto as any).paymentDueDate ? new Date((dto as any).paymentDueDate) : undefined,
-        warrantyExpiresAt: (dto as any).warrantyExpiresAt ? new Date((dto as any).warrantyExpiresAt) : undefined,
+        paymentStatus:
+          dto.paymentStatus ?? this.resolvePaymentStatus(total, paidAmount),
+        expectedDeliveryDate: dto.expectedDeliveryDate
+          ? new Date(dto.expectedDeliveryDate)
+          : undefined,
+        paymentDueDate: (dto as any).paymentDueDate
+          ? new Date((dto as any).paymentDueDate)
+          : undefined,
+        warrantyExpiresAt: (dto as any).warrantyExpiresAt
+          ? new Date((dto as any).warrantyExpiresAt)
+          : undefined,
         notes: dto.notes,
       },
       include: this.defaultInclude(),
@@ -211,8 +243,11 @@ export class OrdersService {
 
     // Ledger Automation: Recalculate Ledger entries for the updated Order
     try {
-      const ledger = await this.ledgerService.getOrCreateLedger(order.customerId, workspaceId);
-      
+      const ledger = await this.ledgerService.getOrCreateLedger(
+        order.customerId,
+        workspaceId,
+      );
+
       // Delete existing auto-created ledger transactions for this order
       await this.prisma.ledgerTransaction.deleteMany({
         where: {
@@ -240,7 +275,10 @@ export class OrdersService {
         await this.prisma.ledgerTransaction.create({
           data: {
             ledgerId: ledger.id,
-            type: order.total === order.paidAmount ? 'FULL_PAYMENT' : 'PARTIAL_PAYMENT',
+            type:
+              order.total === order.paidAmount
+                ? 'FULL_PAYMENT'
+                : 'PARTIAL_PAYMENT',
             referenceId: order.id,
             amount: order.paidAmount,
             debit: 0,
@@ -253,7 +291,10 @@ export class OrdersService {
 
       await this.ledgerService.recalculateRunningBalances(ledger.id);
     } catch (err) {
-      console.error('Failed to update automated ledger entries on order update:', err);
+      console.error(
+        'Failed to update automated ledger entries on order update:',
+        err,
+      );
     }
 
     return order;
@@ -264,8 +305,11 @@ export class OrdersService {
 
     // Ledger Automation: Remove associated ledger entries and recalculate
     try {
-      const ledger = await this.ledgerService.getOrCreateLedger(order.customerId, workspaceId);
-      
+      const ledger = await this.ledgerService.getOrCreateLedger(
+        order.customerId,
+        workspaceId,
+      );
+
       await this.prisma.ledgerTransaction.deleteMany({
         where: {
           ledgerId: ledger.id,
@@ -289,7 +333,10 @@ export class OrdersService {
     }
   }
 
-  private async ensureCustomerBelongsToWorkspace(customerId: string, workspaceId: string) {
+  private async ensureCustomerBelongsToWorkspace(
+    customerId: string,
+    workspaceId: string,
+  ) {
     const customer = await this.prisma.customer.findFirst({
       where: { id: customerId, workspaceId },
     });
@@ -309,7 +356,9 @@ export class OrdersService {
     });
 
     if (!prescription) {
-      throw new NotFoundException(`Prescription with ID "${prescriptionId}" not found`);
+      throw new NotFoundException(
+        `Prescription with ID "${prescriptionId}" not found`,
+      );
     }
   }
 

@@ -1,4 +1,14 @@
-import { Controller, Get, Patch, Post, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -36,7 +46,16 @@ export class SettingsController {
 
   @Post('branches')
   @Roles('OWNER')
-  async createBranch(@Request() req: any, @Body() body: { name: string; address: string; phone?: string; businessHours?: string }) {
+  async createBranch(
+    @Request() req: any,
+    @Body()
+    body: {
+      name: string;
+      address: string;
+      phone?: string;
+      businessHours?: string;
+    },
+  ) {
     const workspaceId = req.user.workspaceId;
     return this.settingsService.createBranch(workspaceId, body);
   }

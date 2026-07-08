@@ -8,7 +8,11 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 export class AppointmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(workspaceId: string, dto: CreateAppointmentDto, userBranchId?: string) {
+  async create(
+    workspaceId: string,
+    dto: CreateAppointmentDto,
+    userBranchId?: string,
+  ) {
     const appointment = await this.prisma.appointment.create({
       data: {
         customerId: dto.customerId,
@@ -54,7 +58,11 @@ export class AppointmentsService {
     return appointment;
   }
 
-  async createWalkIn(workspaceId: string, customerId: string, userBranchId?: string) {
+  async createWalkIn(
+    workspaceId: string,
+    customerId: string,
+    userBranchId?: string,
+  ) {
     return this.prisma.appointment.create({
       data: {
         customerId,
@@ -110,7 +118,9 @@ export class AppointmentsService {
     const appointment = await this.prisma.appointment.findFirst({
       where: { id, workspaceId },
       include: {
-        customer: { select: { id: true, fullName: true, phone: true, email: true } },
+        customer: {
+          select: { id: true, fullName: true, phone: true, email: true },
+        },
       },
     });
 
@@ -168,7 +178,8 @@ export class AppointmentsService {
             scheduledAt: annualDate,
             durationMinutes: 30,
             type: 'Examination',
-            notes: 'Auto-generated: Annual Eye Checkup reminder (12 months later)',
+            notes:
+              'Auto-generated: Annual Eye Checkup reminder (12 months later)',
             workspaceId,
           },
         });

@@ -16,7 +16,9 @@ async function bootstrap() {
 
   const uniqueId = Date.now().toString();
   const testEmail = `test-visit-${uniqueId}@optiflow-test.com`;
-  const testPhone = `+91${Math.floor(1000000000 + Math.random() * 9000000000).toString().substring(0, 10)}`;
+  const testPhone = `+91${Math.floor(1000000000 + Math.random() * 9000000000)
+    .toString()
+    .substring(0, 10)}`;
 
   try {
     // 1. REGISTER
@@ -41,7 +43,9 @@ async function bootstrap() {
     console.log(`✅ Customer Created! ID: ${customer.id}`);
 
     // 3. CREATE VISIT
-    console.log('\nStep 3: Creating a unified visit encounter with nested prescription and order...');
+    console.log(
+      '\nStep 3: Creating a unified visit encounter with nested prescription and order...',
+    );
     const visit = await visitService.create(workspaceId, {
       customerId: customer.id,
       type: 'Full Examination',
@@ -77,17 +81,28 @@ async function bootstrap() {
     console.log(`✅ Visit Created! ID: ${visit.id}`);
     console.log(`✅ Prescriptions linked: ${visit.prescriptions.length}`);
     console.log(`✅ Orders linked: ${visit.orders.length}`);
-    console.log(`✅ Dues posted & transactions logged: ${visit.transactions.length}`);
+    console.log(
+      `✅ Dues posted & transactions logged: ${visit.transactions.length}`,
+    );
 
     // Assert relations are intact
-    if (visit.prescriptions.length !== 1 || visit.prescriptions[0].rightSphere !== -1.75) {
-      throw new Error('Prescription was not correctly created or linked to visit');
+    if (
+      visit.prescriptions.length !== 1 ||
+      visit.prescriptions[0].rightSphere !== -1.75
+    ) {
+      throw new Error(
+        'Prescription was not correctly created or linked to visit',
+      );
     }
     if (visit.orders.length !== 1 || visit.orders[0].frameBrand !== 'Oakley') {
-      throw new Error('Specs order was not correctly created or linked to visit');
+      throw new Error(
+        'Specs order was not correctly created or linked to visit',
+      );
     }
     if (visit.transactions.length !== 2) {
-      throw new Error('Ledger transaction count is invalid (expected invoice + deposit payment)');
+      throw new Error(
+        'Ledger transaction count is invalid (expected invoice + deposit payment)',
+      );
     }
 
     // 4. CLEANUP / CASCADING DELETE
@@ -104,10 +119,16 @@ async function bootstrap() {
       where: { visitId: visit.id },
     });
 
-    if (checkPrescriptions.length > 0 || checkOrders.length > 0 || checkTx.length > 0) {
+    if (
+      checkPrescriptions.length > 0 ||
+      checkOrders.length > 0 ||
+      checkTx.length > 0
+    ) {
       throw new Error('Cascade delete did not purge nested records');
     }
-    console.log('✅ Cascade deletion successfully verified! All orphaned records purged.');
+    console.log(
+      '✅ Cascade deletion successfully verified! All orphaned records purged.',
+    );
 
     // Cleanup customer and workspace
     console.log('\nCleaning up E2E generated database entries...');
@@ -116,7 +137,6 @@ async function bootstrap() {
     await prismaService.workspace.delete({ where: { id: workspaceId } });
     console.log('🧹 Cleanup Completed successfully.');
     console.log('🎉 VISIT-CENTRIC E2E TESTS COMPLETED WITH 100% SUCCESS!');
-
   } catch (error) {
     console.error('❌ E2E Test Execution Failed:', error);
     process.exit(1);

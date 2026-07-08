@@ -1,12 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { BaseCrudService, CrudConfig } from '../common/crud/base-crud.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { ListCustomersDto } from './dto/list-customers.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Injectable()
-export class CustomersService {
-  constructor(private readonly prisma: PrismaService) {}
+export class CustomersService extends BaseCrudService {
+  protected readonly config: CrudConfig = {
+    model: 'customer',
+    searchFields: ['fullName', 'phone', 'email'],
+    defaultSortBy: 'createdAt',
+  };
+
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
+
+  // ─── Override create to map DTO fields properly ───────────────────────────────
 
   async create(workspaceId: string, dto: CreateCustomerDto) {
     return this.prisma.customer.create({
@@ -26,53 +37,24 @@ export class CustomersService {
     });
   }
 
+  // ─── Override findAll to use inherited generic implementation ─────────────────
+
   async findAll(workspaceId: string, query: ListCustomersDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
-    const skip = (page - 1) * limit;
-
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.customer.findMany({
-        where: { workspaceId },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.customer.count({
-        where: { workspaceId },
-      }),
-    ]);
-
-    return {
-      data: items,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return super.findAll(workspaceId, query);
   }
+
+  // ─── Override findOne to include family member relationships ─────────────────
 
   async findOne(id: string, workspaceId: string) {
     const customer = await this.prisma.customer.findFirst({
-      where: { id, workspaceId },
+      where: { id, workspaceId, deletedAt: null },
       include: {
         familyMembers: {
-          select: {
-            id: true,
-            fullName: true,
-            phone: true,
-            relationType: true,
-          },
+          where: { deletedAt: null },
+          select: { id: true, fullName: true, phone: true, relationType: true },
         },
         primaryMember: {
-          select: {
-            id: true,
-            fullName: true,
-            phone: true,
-            relationType: true,
-          },
+          select: { id: true, fullName: true, phone: true, relationType: true },
         },
       },
     });
@@ -83,6 +65,8 @@ export class CustomersService {
 
     return customer;
   }
+
+  // ─── Override update to map DTO fields properly ───────────────────────────────
 
   async update(id: string, workspaceId: string, dto: UpdateCustomerDto) {
     await this.findOne(id, workspaceId);
@@ -98,19 +82,19 @@ export class CustomersService {
         address: dto.address,
         notes: dto.notes,
         tags: dto.tags !== undefined ? dto.tags : undefined,
-        primaryMemberId: dto.primaryMemberId !== undefined ? (dto.primaryMemberId || null) : undefined,
-        relationType: dto.relationType !== undefined ? (dto.relationType || null) : undefined,
+        primaryMemberId:
+          dto.primaryMemberId !== undefined
+            ? dto.primaryMemberId || null
+            : undefined,
+        relationType:
+          dto.relationType !== undefined ? dto.relationType || null : undefined,
       },
     });
   }
 
+  // ─── Legacy alias (hard delete) kept for backwards compat ────────────────────
+
   async remove(id: string, workspaceId: string) {
-    await this.findOne(id, workspaceId);
-
-    await this.prisma.customer.delete({
-      where: { id },
-    });
-
-    return { success: true };
+    return this.softDelete(id, workspaceId);
   }
 }

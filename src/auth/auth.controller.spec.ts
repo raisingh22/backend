@@ -71,7 +71,10 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should call authService.login', async () => {
-      const loginDto = { mobileNumber: '+919876543210', password: 'Password123!' };
+      const loginDto = {
+        mobileNumber: '+919876543210',
+        password: 'Password123!',
+      };
       await controller.login(loginDto, mockReq);
       expect(service.login).toHaveBeenCalledWith(loginDto, {
         userAgent: 'TestAgent',
@@ -117,7 +120,10 @@ describe('AuthController', () => {
     it('should call authService.sendVerificationCode', async () => {
       const user = { id: 'user-id', mobileNumber: '+919876543210' };
       await controller.sendVerificationSms(user);
-      expect(service.sendVerificationCode).toHaveBeenCalledWith('user-id', '+919876543210');
+      expect(service.sendVerificationCode).toHaveBeenCalledWith(
+        'user-id',
+        '+919876543210',
+      );
     });
   });
 
@@ -131,7 +137,11 @@ describe('AuthController', () => {
 
   describe('resetPassword', () => {
     it('should call authService.resetPassword', async () => {
-      const dto = { mobileNumber: '+919876543210', code: '654321', newPassword: 'NewPassword123!' };
+      const dto = {
+        mobileNumber: '+919876543210',
+        code: '654321',
+        newPassword: 'NewPassword123!',
+      };
       await controller.resetPassword(dto);
       expect(service.resetPassword).toHaveBeenCalledWith(dto);
     });
@@ -147,8 +157,10 @@ describe('AuthController', () => {
     it('should call authService.revokeSession', async () => {
       const user = { id: 'user-id' };
       await controller.revokeSession(user, 'session-id');
-      expect(service.revokeSession).toHaveBeenCalledWith('user-id', 'session-id');
+      expect(service.revokeSession).toHaveBeenCalledWith(
+        'user-id',
+        'session-id',
+      );
     });
   });
 });
-

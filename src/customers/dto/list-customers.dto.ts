@@ -1,17 +1,14 @@
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
+import { BaseListQueryDto } from '../../common/dto/base-list-query.dto';
 
-export class ListCustomersDto {
+export class ListCustomersDto extends BaseListQueryDto {
+  /** Filter by a specific tag value */
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
+  @IsString()
+  tag?: string;
 
+  /** Filter by membership tier (Bronze, Silver, Gold) */
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit?: number = 20;
+  @IsString()
+  membershipTier?: string;
 }

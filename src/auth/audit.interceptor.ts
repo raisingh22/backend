@@ -34,7 +34,12 @@ export class AuditInterceptor implements NestInterceptor {
 
     const action = this.methodToAction(method);
     const entityType = this.resolveEntityType(context);
-    const entityId = request.params?.id || request.params?.orderId || request.params?.customerId || request.params?.transactionId || null;
+    const entityId =
+      request.params?.id ||
+      request.params?.orderId ||
+      request.params?.customerId ||
+      request.params?.transactionId ||
+      null;
 
     return next.handle().pipe(
       tap(async (responseBody) => {
@@ -53,7 +58,8 @@ export class AuditInterceptor implements NestInterceptor {
                 body: method === 'DELETE' ? undefined : request.body,
                 params: request.params,
               }),
-              ipAddress: request.ip || request.connection?.remoteAddress || null,
+              ipAddress:
+                request.ip || request.connection?.remoteAddress || null,
               userAgent: request.headers?.['user-agent'] || null,
               workspaceId: user.workspaceId,
             },
@@ -68,11 +74,15 @@ export class AuditInterceptor implements NestInterceptor {
 
   private methodToAction(method: string): string {
     switch (method) {
-      case 'POST': return 'CREATE';
+      case 'POST':
+        return 'CREATE';
       case 'PATCH':
-      case 'PUT': return 'UPDATE';
-      case 'DELETE': return 'DELETE';
-      default: return method;
+      case 'PUT':
+        return 'UPDATE';
+      case 'DELETE':
+        return 'DELETE';
+      default:
+        return method;
     }
   }
 

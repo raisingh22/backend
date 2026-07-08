@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -14,7 +23,11 @@ export class OrdersController {
 
   @Post('orders')
   create(@CurrentUser() user: any, @Body() createOrderDto: CreateOrderDto) {
-    return this.ordersService.create(user.workspaceId, createOrderDto, user.branchId);
+    return this.ordersService.create(
+      user.workspaceId,
+      createOrderDto,
+      user.branchId,
+    );
   }
 
   @Get('orders')
@@ -23,8 +36,15 @@ export class OrdersController {
   }
 
   @Get('customers/:customerId/orders')
-  findAllForCustomer(@CurrentUser() user: any, @Param('customerId') customerId: string) {
-    return this.ordersService.findAllForCustomer(customerId, user.workspaceId, user.branchId);
+  findAllForCustomer(
+    @CurrentUser() user: any,
+    @Param('customerId') customerId: string,
+  ) {
+    return this.ordersService.findAllForCustomer(
+      customerId,
+      user.workspaceId,
+      user.branchId,
+    );
   }
 
   @Get('orders/:orderId')
@@ -38,7 +58,12 @@ export class OrdersController {
     @Param('orderId') orderId: string,
     @Body() updateOrderDto: UpdateOrderDto,
   ) {
-    return this.ordersService.update(orderId, user.workspaceId, updateOrderDto, user.branchId);
+    return this.ordersService.update(
+      orderId,
+      user.workspaceId,
+      updateOrderDto,
+      user.branchId,
+    );
   }
 
   @Delete('orders/:orderId')

@@ -10,7 +10,11 @@ export class VisitService {
     private readonly ordersService: OrdersService,
   ) {}
 
-  async create(workspaceId: string, dto: CreateVisitDto, userBranchId?: string) {
+  async create(
+    workspaceId: string,
+    dto: CreateVisitDto,
+    userBranchId?: string,
+  ) {
     // Verify customer exists and belongs to workspace
     const customer = await this.prisma.customer.findFirst({
       where: { id: dto.customerId, workspaceId },
@@ -58,24 +62,28 @@ export class VisitService {
 
     // 3. If order payload exists, create order and link it to this visit
     if (dto.order) {
-      const order = await this.ordersService.create(workspaceId, {
-        customerId: dto.customerId,
-        prescriptionId: prescriptionId || undefined,
-        frameName: dto.order.frameName || '',
-        frameBrand: dto.order.frameBrand || '',
-        frameModel: dto.order.frameModel || '',
-        lensType: dto.order.lensType || '',
-        lensCoating: dto.order.lensCoating || '',
-        quantity: dto.order.quantity || 1,
-        subtotal: dto.order.subtotal,
-        discount: dto.order.discount || 0,
-        tax: dto.order.tax || 0,
-        paidAmount: dto.order.paidAmount || 0,
-        status: 'PENDING',
-        paymentStatus: 'UNPAID', // calculated inside ordersService
-        expectedDeliveryDate: dto.order.expectedDeliveryDate,
-        notes: dto.order.notes || '',
-      }, userBranchId);
+      const order = await this.ordersService.create(
+        workspaceId,
+        {
+          customerId: dto.customerId,
+          prescriptionId: prescriptionId || undefined,
+          frameName: dto.order.frameName || '',
+          frameBrand: dto.order.frameBrand || '',
+          frameModel: dto.order.frameModel || '',
+          lensType: dto.order.lensType || '',
+          lensCoating: dto.order.lensCoating || '',
+          quantity: dto.order.quantity || 1,
+          subtotal: dto.order.subtotal,
+          discount: dto.order.discount || 0,
+          tax: dto.order.tax || 0,
+          paidAmount: dto.order.paidAmount || 0,
+          status: 'PENDING',
+          paymentStatus: 'UNPAID', // calculated inside ordersService
+          expectedDeliveryDate: dto.order.expectedDeliveryDate,
+          notes: dto.order.notes || '',
+        },
+        userBranchId,
+      );
 
       // Link order to visit
       await this.prisma.order.update({

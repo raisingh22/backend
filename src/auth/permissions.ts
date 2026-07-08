@@ -25,8 +25,5 @@ export const RolePermissions: Record<Role, Permission[]> = {
     Permission.READ_LEDGER,
     Permission.WRITE_LEDGER,
   ],
-  STAFF: [
-    Permission.READ_CLINIC,
-    Permission.WRITE_CLINIC,
-  ],
+  STAFF: [Permission.READ_CLINIC, Permission.WRITE_CLINIC],
 };

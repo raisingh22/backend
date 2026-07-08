@@ -45,7 +45,11 @@ describe('NotificationsService', () => {
     const dobToday = new Date();
     dobToday.setFullYear(1990); // keep same month and day, but 1990
 
-    const mockCustomer = { id: 'c1', fullName: 'John Doe', dateOfBirth: dobToday };
+    const mockCustomer = {
+      id: 'c1',
+      fullName: 'John Doe',
+      dateOfBirth: dobToday,
+    };
     const mockOrder = {
       id: 'o1',
       orderNumber: 'ORD-000001',
@@ -93,22 +97,24 @@ describe('NotificationsService', () => {
     mockPrismaService.prescription.findMany.mockResolvedValue([mockPresc]);
 
     // 3. customers
-    mockPrismaService.customer.findMany.mockImplementation(async ({ include }) => {
-      if (include?.prescriptions) {
-        // customersWithPrescriptions
-        const oldDate = new Date();
-        oldDate.setMonth(oldDate.getMonth() - 8); // more than 6 months ago
-        return [
-          {
-            id: 'c1',
-            fullName: 'John Doe',
-            prescriptions: [{ prescriptionDate: oldDate }],
-          },
-        ];
-      }
-      // customersWithDob
-      return [mockCustomer];
-    });
+    mockPrismaService.customer.findMany.mockImplementation(
+      async ({ include }) => {
+        if (include?.prescriptions) {
+          // customersWithPrescriptions
+          const oldDate = new Date();
+          oldDate.setMonth(oldDate.getMonth() - 8); // more than 6 months ago
+          return [
+            {
+              id: 'c1',
+              fullName: 'John Doe',
+              prescriptions: [{ prescriptionDate: oldDate }],
+            },
+          ];
+        }
+        // customersWithDob
+        return [mockCustomer];
+      },
+    );
 
     const result = await service.getNotifications(workspaceId);
 
@@ -126,11 +132,15 @@ describe('NotificationsService', () => {
     expect(newOrderAlert?.message).toContain('ORD-000001');
 
     // Verify birthday alert
-    const birthdayAlert = result.find((alert) => alert.type === 'CUSTOMER_BIRTHDAY');
+    const birthdayAlert = result.find(
+      (alert) => alert.type === 'CUSTOMER_BIRTHDAY',
+    );
     expect(birthdayAlert).toBeDefined();
 
     // Verify revisit alert
-    const revisitAlert = result.find((alert) => alert.type === 'CUSTOMER_REVISIT');
+    const revisitAlert = result.find(
+      (alert) => alert.type === 'CUSTOMER_REVISIT',
+    );
     expect(revisitAlert).toBeDefined();
   });
 });

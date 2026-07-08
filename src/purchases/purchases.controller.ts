@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { PurchasesService } from './purchases.service';
 
@@ -10,7 +17,13 @@ export class PurchasesController {
   @Post()
   async create(
     @Request() req: any,
-    @Body() body: { supplierId: string; totalAmount: number; status: string; items?: string }
+    @Body()
+    body: {
+      supplierId: string;
+      totalAmount: number;
+      status: string;
+      items?: string;
+    },
   ) {
     return this.purchasesService.create(req.user.workspaceId, body);
   }

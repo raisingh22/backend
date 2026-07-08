@@ -1,7 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { ListTasksDto } from './dto/list-tasks.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -10,14 +21,19 @@ import { CurrentUser } from '../auth/current-user.decorator';
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
+  // ─── CRUD ──────────────────────────────────────────────────────────────────
+
   @Post()
-  create(@CurrentUser() user: any, @Body() createTaskDto: CreateTaskDto) {
-    return this.tasksService.create(user.id, user.workspaceId, createTaskDto);
+  create(@CurrentUser() user: any, @Body() dto: CreateTaskDto) {
+    return this.tasksService.create(user.workspaceId, {
+      ...dto,
+      userId: user.id,
+    });
   }
 
   @Get()
-  findAll(@CurrentUser() user: any) {
-    return this.tasksService.findAll(user.workspaceId);
+  findAll(@CurrentUser() user: any, @Query() query: ListTasksDto) {
+    return this.tasksService.findAll(user.workspaceId, query);
   }
 
   @Get(':id')
@@ -29,13 +45,42 @@ export class TasksController {
   update(
     @CurrentUser() user: any,
     @Param('id') id: string,
-    @Body() updateTaskDto: UpdateTaskDto,
+    @Body() dto: UpdateTaskDto,
   ) {
-    return this.tasksService.update(id, user.workspaceId, updateTaskDto);
+    return this.tasksService.update(id, user.workspaceId, dto);
   }
 
   @Delete(':id')
   remove(@CurrentUser() user: any, @Param('id') id: string) {
-    return this.tasksService.remove(id, user.workspaceId);
+    return this.tasksService.softDelete(id, user.workspaceId);
+  }
+
+  // ─── Soft Delete & Restore ─────────────────────────────────────────────────
+
+  @Post(':id/restore')
+  restore(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.tasksService.restore(id, user.workspaceId);
+  }
+
+  @Delete(':id/hard-delete')
+  hardDelete(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.tasksService.hardDelete(id, user.workspaceId);
+  }
+
+  // ─── Bulk Operations ───────────────────────────────────────────────────────
+
+  @Post('bulk/soft-delete')
+  bulkSoftDelete(@CurrentUser() user: any, @Body() body: { ids: string[] }) {
+    return this.tasksService.bulkSoftDelete(user.workspaceId, body.ids);
+  }
+
+  @Post('bulk/restore')
+  bulkRestore(@CurrentUser() user: any, @Body() body: { ids: string[] }) {
+    return this.tasksService.bulkRestore(user.workspaceId, body.ids);
+  }
+
+  @Post('bulk/hard-delete')
+  bulkHardDelete(@CurrentUser() user: any, @Body() body: { ids: string[] }) {
+    return this.tasksService.bulkHardDelete(user.workspaceId, body.ids);
   }
 }

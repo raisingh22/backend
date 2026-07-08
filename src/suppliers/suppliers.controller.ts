@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { SuppliersService } from './suppliers.service';
 
@@ -10,7 +19,14 @@ export class SuppliersController {
   @Post()
   async create(
     @Request() req: any,
-    @Body() body: { name: string; contactPerson?: string; phone?: string; email?: string; address?: string }
+    @Body()
+    body: {
+      name: string;
+      contactPerson?: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+    },
   ) {
     return this.suppliersService.create(req.user.workspaceId, body);
   }

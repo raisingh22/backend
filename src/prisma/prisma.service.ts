@@ -5,7 +5,10 @@ import pg from 'pg';
 import 'dotenv/config';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly pool: pg.Pool;
 
   constructor() {
@@ -27,7 +30,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     const url = new URL(connectionString);
     const sslMode = url.searchParams.get('sslmode');
     const dbSsl = process.env.DB_SSL?.toLowerCase();
-    const isPrivateHost = !url.hostname.includes('.') || url.hostname.endsWith('.internal');
+    const isPrivateHost =
+      !url.hostname.includes('.') || url.hostname.endsWith('.internal');
 
     if (dbSsl === 'true' || sslMode === 'require') {
       return { rejectUnauthorized: false };

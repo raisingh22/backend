@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CreatePrescriptionDto } from './dto/create-prescription.dto';
@@ -16,12 +25,22 @@ export class PrescriptionsController {
     @Param('customerId') customerId: string,
     @Body() createPrescriptionDto: CreatePrescriptionDto,
   ) {
-    return this.prescriptionsService.create(customerId, user.workspaceId, createPrescriptionDto);
+    return this.prescriptionsService.create(
+      customerId,
+      user.workspaceId,
+      createPrescriptionDto,
+    );
   }
 
   @Get('customers/:customerId/prescriptions')
-  findAllForCustomer(@CurrentUser() user: any, @Param('customerId') customerId: string) {
-    return this.prescriptionsService.findAllForCustomer(customerId, user.workspaceId);
+  findAllForCustomer(
+    @CurrentUser() user: any,
+    @Param('customerId') customerId: string,
+  ) {
+    return this.prescriptionsService.findAllForCustomer(
+      customerId,
+      user.workspaceId,
+    );
   }
 
   @Get('prescriptions/:id')
@@ -35,7 +54,11 @@ export class PrescriptionsController {
     @Param('id') id: string,
     @Body() updatePrescriptionDto: UpdatePrescriptionDto,
   ) {
-    return this.prescriptionsService.update(id, user.workspaceId, updatePrescriptionDto);
+    return this.prescriptionsService.update(
+      id,
+      user.workspaceId,
+      updatePrescriptionDto,
+    );
   }
 
   @Delete('prescriptions/:id')

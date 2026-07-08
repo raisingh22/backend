@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import jwt from 'jsonwebtoken';
 
@@ -11,13 +16,18 @@ export class JwtAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+      throw new UnauthorizedException(
+        'Missing or invalid Authorization header',
+      );
     }
 
     const token = authHeader.split(' ')[1];
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super-secret-key-change-in-production') as {
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || 'super-secret-key-change-in-production',
+      ) as {
         userId: string;
         workspaceId: string;
       };

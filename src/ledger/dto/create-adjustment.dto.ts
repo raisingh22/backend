@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsEnum } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+} from 'class-validator';
 
 export class CreateAdjustmentDto {
   @IsNotEmpty()
@@ -10,8 +16,21 @@ export class CreateAdjustmentDto {
   amount: number;
 
   @IsNotEmpty()
-  @IsEnum(['REFUND', 'ADJUSTMENT', 'DISCOUNT', 'RETURN', 'EXCHANGE', 'OPENING_BALANCE'])
-  type: 'REFUND' | 'ADJUSTMENT' | 'DISCOUNT' | 'RETURN' | 'EXCHANGE' | 'OPENING_BALANCE';
+  @IsEnum([
+    'REFUND',
+    'ADJUSTMENT',
+    'DISCOUNT',
+    'RETURN',
+    'EXCHANGE',
+    'OPENING_BALANCE',
+  ])
+  type:
+    | 'REFUND'
+    | 'ADJUSTMENT'
+    | 'DISCOUNT'
+    | 'RETURN'
+    | 'EXCHANGE'
+    | 'OPENING_BALANCE';
 
   @IsOptional()
   @IsString()

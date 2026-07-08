@@ -19,7 +19,9 @@ export class NotificationsService {
 
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const seventyTwoHoursAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+    const seventyTwoHoursAgo = new Date(
+      now.getTime() - 3 * 24 * 60 * 60 * 1000,
+    );
     const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -187,7 +189,9 @@ export class NotificationsService {
 
     // 6. Pending/In Progress orders older than 3 days
     pendingOrders.forEach((order) => {
-      const days = Math.floor((now.getTime() - order.createdAt.getTime()) / (24 * 60 * 60 * 1000));
+      const days = Math.floor(
+        (now.getTime() - order.createdAt.getTime()) / (24 * 60 * 60 * 1000),
+      );
       notifications.push({
         id: `pending-old-${order.id}`,
         type: 'PENDING_ORDERS_OLD',
@@ -238,12 +242,15 @@ export class NotificationsService {
       id: `low-stock-rayoptic-${workspaceId}`,
       type: 'LOW_STOCK',
       title: '⚠️ Low stock warning',
-      message: 'Low stock: RayOptic RX-101 frame quantity is low (only 2 left).',
+      message:
+        'Low stock: RayOptic RX-101 frame quantity is low (only 2 left).',
       createdAt: now,
       severity: 'warning',
     });
 
     // Sort by createdAt descending
-    return notifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return notifications.sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
   }
 }

@@ -165,7 +165,7 @@ export class DashboardService {
       },
       recentCustomers,
       recentOrders,
-      topDebtors: topDebtors.map(td => ({
+      topDebtors: topDebtors.map((td) => ({
         id: td.id,
         customerId: td.customerId,
         customerName: td.customer.fullName,

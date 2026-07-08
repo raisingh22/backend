@@ -7,7 +7,11 @@ import { UpdatePrescriptionDto } from './dto/update-prescription.dto';
 export class PrescriptionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(customerId: string, workspaceId: string, dto: CreatePrescriptionDto) {
+  async create(
+    customerId: string,
+    workspaceId: string,
+    dto: CreatePrescriptionDto,
+  ) {
     const customer = await this.prisma.customer.findFirst({
       where: { id: customerId, workspaceId },
     });
@@ -28,7 +32,9 @@ export class PrescriptionsService {
         leftAdd: dto.leftAdd,
         pupillaryDistance: dto.pupillaryDistance,
         doctorName: dto.doctorName,
-        prescriptionDate: dto.prescriptionDate ? new Date(dto.prescriptionDate) : undefined,
+        prescriptionDate: dto.prescriptionDate
+          ? new Date(dto.prescriptionDate)
+          : undefined,
         notes: dto.notes,
         customerId,
         workspaceId,
@@ -82,7 +88,9 @@ export class PrescriptionsService {
         leftAdd: dto.leftAdd,
         pupillaryDistance: dto.pupillaryDistance,
         doctorName: dto.doctorName,
-        prescriptionDate: dto.prescriptionDate ? new Date(dto.prescriptionDate) : undefined,
+        prescriptionDate: dto.prescriptionDate
+          ? new Date(dto.prescriptionDate)
+          : undefined,
         notes: dto.notes,
       },
     });
@@ -98,7 +106,10 @@ export class PrescriptionsService {
     return { success: true };
   }
 
-  private async ensureCustomerBelongsToWorkspace(customerId: string, workspaceId: string) {
+  private async ensureCustomerBelongsToWorkspace(
+    customerId: string,
+    workspaceId: string,
+  ) {
     const customer = await this.prisma.customer.findFirst({
       where: { id: customerId, workspaceId },
     });

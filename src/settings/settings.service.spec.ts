@@ -43,12 +43,16 @@ describe('SettingsService', () => {
     };
 
     it('should return existing tax settings', async () => {
-      mockPrismaService.workspaceSettings.findUnique.mockResolvedValue(mockSettings);
+      mockPrismaService.workspaceSettings.findUnique.mockResolvedValue(
+        mockSettings,
+      );
 
       const result = await service.getTaxSettings(workspaceId);
 
       expect(result).toEqual(mockSettings);
-      expect(mockPrismaService.workspaceSettings.findUnique).toHaveBeenCalledWith({
+      expect(
+        mockPrismaService.workspaceSettings.findUnique,
+      ).toHaveBeenCalledWith({
         where: { workspaceId },
         include: { workspace: true },
       });
@@ -56,12 +60,16 @@ describe('SettingsService', () => {
 
     it('should create and return tax settings if they do not exist', async () => {
       mockPrismaService.workspaceSettings.findUnique.mockResolvedValue(null);
-      mockPrismaService.workspaceSettings.create.mockResolvedValue(mockSettings);
+      mockPrismaService.workspaceSettings.create.mockResolvedValue(
+        mockSettings,
+      );
 
       const result = await service.getTaxSettings(workspaceId);
 
       expect(result).toEqual(mockSettings);
-      expect(mockPrismaService.workspaceSettings.findUnique).toHaveBeenCalledWith({
+      expect(
+        mockPrismaService.workspaceSettings.findUnique,
+      ).toHaveBeenCalledWith({
         where: { workspaceId },
         include: { workspace: true },
       });
